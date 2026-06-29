@@ -32,8 +32,11 @@ export function startGame(room) {
   const pair = randomPairFromPacks(cfg.wordpackIds);
   if (!pair) return { error: "Aucun pack sélectionné (ou packs vides)" };
 
-  room.civilWord = pair.civil;
-  room.impostorWord = pair.imposteur;
+  // Randomly swap which side of the pair is the civils' word, so the same pair
+  // doesn't always produce the same association.
+  const swap = Math.random() < 0.5;
+  room.civilWord = swap ? pair.imposteur : pair.civil;
+  room.impostorWord = swap ? pair.civil : pair.imposteur;
 
   // Shuffle players and assign special roles.
   const shuffled = shuffle(players);
