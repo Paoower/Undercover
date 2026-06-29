@@ -23,7 +23,7 @@ export interface PlayerView {
 export interface RoomConfig {
   numImpostors: number;
   misterWhiteEnabled: boolean;
-  wordpackId: string;
+  wordpackIds: string[];
   cluesPerPlayer: number;
 }
 

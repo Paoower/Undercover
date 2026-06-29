@@ -202,10 +202,13 @@ io.on("connection", (socket) => {
     const room = getBoundRoom();
     if (!room || !isHost(room)) return cb?.({ ok: false, error: "Action réservée à l'hôte" });
     if (room.phase !== "lobby") return cb?.({ ok: false, error: "Partie déjà lancée" });
+    const wordpackIds = Array.isArray(config.wordpackIds)
+      ? config.wordpackIds.filter((id) => typeof id === "string")
+      : [];
     room.config = {
       numImpostors: Math.max(1, parseInt(config.numImpostors, 10) || 1),
       misterWhiteEnabled: !!config.misterWhiteEnabled,
-      wordpackId: config.wordpackId || "default",
+      wordpackIds,
       cluesPerPlayer: Math.min(5, Math.max(1, parseInt(config.cluesPerPlayer, 10) || 2)),
     };
     cb?.({ ok: true });

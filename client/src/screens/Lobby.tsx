@@ -27,10 +27,26 @@ export function Lobby({ room, isHost, onAction, onLeave }: Props) {
 
   const cfg = room.config;
   const maxImpostors = Math.max(1, room.players.length - 2);
-  const selectedPack = packs.find((p) => p.id === cfg.wordpackId);
+  const selectedIds = cfg.wordpackIds || [];
+  const totalPairs = packs
+    .filter((p) => selectedIds.includes(p.id))
+    .reduce((sum, p) => sum + p.count, 0);
+
+  // Group packs by their theme for display.
+  const groups = packs.reduce<Record<string, PackSummary[]>>((acc, p) => {
+    const key = p.theme || "Autres";
+    (acc[key] ||= []).push(p);
+    return acc;
+  }, {});
 
   function update(patch: Partial<typeof cfg>) {
     onAction("lobby:updateConfig", { ...cfg, ...patch });
+  }
+
+  function togglePack(id: string) {
+    const set = new Set(selectedIds);
+    set.has(id) ? set.delete(id) : set.add(id);
+    update({ wordpackIds: [...set] });
   }
 
   return (
@@ -128,33 +144,69 @@ export function Lobby({ room, isHost, onAction, onLeave }: Props) {
           </div>
 
           <div className="mb-4">
-            <label className="mb-1 block text-sm text-white/60">Pack de mots</label>
-            <div className="flex gap-2">
-              <select
-                className="input"
-                value={cfg.wordpackId}
-                onChange={(e) => update({ wordpackId: e.target.value })}
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm text-white/60">
+                Packs de mots{" "}
+                <span className="text-white/40">
+                  ({selectedIds.length} sélectionné(s), {totalPairs} paires)
+                </span>
+              </label>
+              <button
+                className="btn-ghost shrink-0 px-3 py-1.5 text-sm"
+                onClick={() => setShowManager(true)}
               >
-                {packs.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-aubergine-900">
-                    {p.name} ({p.count})
-                  </option>
-                ))}
-              </select>
-              <button className="btn-ghost shrink-0" onClick={() => setShowManager(true)}>
                 Gérer
               </button>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {Object.entries(groups).map(([theme, list]) => (
+                <div key={theme}>
+                  <div className="mb-1 text-xs uppercase tracking-wide text-aubergine-300">
+                    {theme}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {list.map((p) => {
+                      const on = selectedIds.includes(p.id);
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => togglePack(p.id)}
+                          className="rounded-full px-3 py-1.5 text-sm font-semibold transition active:scale-95"
+                          style={{
+                            background: on
+                              ? "linear-gradient(120deg,#ff2e9a,#8b5cd6)"
+                              : "rgba(255,255,255,0.06)",
+                            border: on
+                              ? "1px solid rgba(255,255,255,0.3)"
+                              : "1px solid rgba(255,255,255,0.12)",
+                            boxShadow: on
+                              ? "0 0 14px -3px rgba(255,46,154,0.8)"
+                              : undefined,
+                          }}
+                        >
+                          {on ? "✓ " : ""}
+                          {p.name}{" "}
+                          <span className="opacity-60">({p.count})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           <button
             className="btn-primary w-full text-lg"
-            disabled={room.players.length < 3 || !selectedPack || selectedPack.count === 0}
+            disabled={room.players.length < 3 || totalPairs === 0}
             onClick={() => onAction("game:start")}
           >
             {room.players.length < 3
               ? "Il faut au moins 3 joueurs"
-              : "Démarrer la partie"}
+              : totalPairs === 0
+                ? "Sélectionnez au moins un pack"
+                : "Démarrer la partie"}
           </button>
         </div>
       ) : (

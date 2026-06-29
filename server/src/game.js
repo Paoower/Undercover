@@ -1,4 +1,4 @@
-import { randomPair } from "./wordpacks.js";
+import { randomPairFromPacks } from "./wordpacks.js";
 
 function shuffle(arr) {
   const a = [...arr];
@@ -29,8 +29,8 @@ export function startGame(room) {
     return { error: "Trop d'imposteurs/Mister White par rapport au nombre de joueurs" };
   }
 
-  const pair = randomPair(cfg.wordpackId);
-  if (!pair) return { error: "Le pack de mots est vide" };
+  const pair = randomPairFromPacks(cfg.wordpackIds);
+  if (!pair) return { error: "Aucun pack sélectionné (ou packs vides)" };
 
   room.civilWord = pair.civil;
   room.impostorWord = pair.imposteur;

@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { defaultPackIds } from "./wordpacks.js";
 
 // In-memory store of all rooms.
 const rooms = new Map();
@@ -26,7 +27,7 @@ export function createRoom(host) {
     config: {
       numImpostors: 1,
       misterWhiteEnabled: false,
-      wordpackId: "default",
+      wordpackIds: defaultPackIds(),
       cluesPerPlayer: 2,
     },
     players: new Map(),

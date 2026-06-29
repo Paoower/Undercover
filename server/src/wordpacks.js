@@ -102,3 +102,19 @@ export function randomPair(packId) {
   if (!pack || pack.pairs.length === 0) return null;
   return pack.pairs[Math.floor(Math.random() * pack.pairs.length)];
 }
+
+// Pick a random pair from the union of the selected packs.
+export function randomPairFromPacks(packIds) {
+  const ids = Array.isArray(packIds) ? packIds : [packIds];
+  const pool = [];
+  for (const id of ids) {
+    const pack = getPack(id);
+    if (pack) pool.push(...pack.pairs);
+  }
+  if (pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+export function defaultPackIds() {
+  return packs.length ? [packs[0].id] : [];
+}

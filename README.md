@@ -73,7 +73,13 @@ deviner le mot des civils.
 - Les **imposteurs** gagnent s'ils atteignent la majorité (vivants ≥ civils vivants),
   ou si Mister White devine le mot.
 
-## Gestion des packs de mots
+## Packs de mots
+
+L'hôte peut **sélectionner plusieurs packs** à la fois dans le lobby (les paires
+sont alors tirées dans l'union des packs cochés). Packs fournis :
+
+- **Thèmes** : Nourriture, Véhicules, Animaux, Sport
+- **Anime** : Animes (titres), One Piece, Hunter x Hunter, Dandadan, Gachiakuta, Frieren
 
 Depuis le lobby (hôte) → bouton **Gérer** :
 
@@ -87,10 +93,8 @@ Depuis le lobby (hôte) → bouton **Gérer** :
 Modèle d'une paire :
 
 ```json
-{ "civil": "Tom et Jerry", "imposteur": "Titi et Grosminet" }
+{ "civil": "Luffy", "imposteur": "Zoro" }
 ```
-
-Un **pack par défaut** (~24 paires) est fourni.
 
 ## Structure
 
