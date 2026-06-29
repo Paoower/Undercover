@@ -1,0 +1,33 @@
+[
+  {
+    "id": "default",
+    "name": "Pack par défaut",
+    "theme": "Mix",
+    "pairs": [
+      { "civil": "Tom et Jerry", "imposteur": "Titi et Grosminet" },
+      { "civil": "Coca", "imposteur": "Pepsi" },
+      { "civil": "Chat", "imposteur": "Tigre" },
+      { "civil": "McDo", "imposteur": "Burger King" },
+      { "civil": "Plage", "imposteur": "Piscine" },
+      { "civil": "Café", "imposteur": "Thé" },
+      { "civil": "Vélo", "imposteur": "Moto" },
+      { "civil": "Soleil", "imposteur": "Lune" },
+      { "civil": "Pizza", "imposteur": "Quiche" },
+      { "civil": "Football", "imposteur": "Rugby" },
+      { "civil": "Guitare", "imposteur": "Violon" },
+      { "civil": "Chien", "imposteur": "Loup" },
+      { "civil": "Avion", "imposteur": "Hélicoptère" },
+      { "civil": "Pomme", "imposteur": "Poire" },
+      { "civil": "Hiver", "imposteur": "Automne" },
+      { "civil": "Roi", "imposteur": "Reine" },
+      { "civil": "Médecin", "imposteur": "Infirmier" },
+      { "civil": "Train", "imposteur": "Métro" },
+      { "civil": "Crayon", "imposteur": "Stylo" },
+      { "civil": "Montagne", "imposteur": "Colline" },
+      { "civil": "Batman", "imposteur": "Superman" },
+      { "civil": "Mario", "imposteur": "Luigi" },
+      { "civil": "Noël", "imposteur": "Pâques" },
+      { "civil": "Bière", "imposteur": "Vin" }
+    ]
+  }
+]

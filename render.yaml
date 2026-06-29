@@ -1,0 +1,16 @@
+# Render Blueprint — déploiement en un seul service.
+# Le serveur Node sert à la fois l'API Socket.IO et le client React (build statique).
+# Docs : https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: undercover
+    runtime: node
+    plan: free
+    # Build : installe + compile le client, puis installe le serveur.
+    buildCommand: npm run prod:build
+    # Start : lance le serveur Express (qui sert aussi client/dist).
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
