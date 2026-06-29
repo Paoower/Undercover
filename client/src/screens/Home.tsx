@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  AVATAR_STYLES,
-  AVATAR_SEEDS,
-  avatarUrl,
-  makeAvatar,
-} from "../avatars";
+import { ANIME_CHARACTERS, DEFAULT_AVATAR, avatarUrl } from "../avatars";
 
 interface Props {
   onCreate: (pseudo: string, avatar: string) => void;
@@ -14,11 +9,9 @@ interface Props {
 export function Home({ onCreate, onJoin }: Props) {
   const [mode, setMode] = useState<"home" | "create" | "join">("home");
   const [pseudo, setPseudo] = useState("");
-  const [style, setStyle] = useState(AVATAR_STYLES[0].id);
-  const [seed, setSeed] = useState(AVATAR_SEEDS[0]);
+  const [avatar, setAvatar] = useState(DEFAULT_AVATAR);
   const [code, setCode] = useState("");
 
-  const avatar = makeAvatar(style, seed);
   const canSubmit = pseudo.trim().length >= 2;
 
   return (
@@ -70,53 +63,33 @@ export function Home({ onCreate, onJoin }: Props) {
             onChange={(e) => setPseudo(e.target.value)}
           />
 
-          <label className="mb-2 block text-sm text-white/60">Style d'avatar</label>
-          <div className="mb-3 flex flex-wrap gap-2">
-            {AVATAR_STYLES.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setStyle(s.id)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition active:scale-95 ${
-                  style === s.id
-                    ? "bg-white text-black"
-                    : "bg-white/5 text-white hover:bg-white/10"
-                }`}
-                style={{
-                  border:
-                    style === s.id
-                      ? "1px solid #fff"
-                      : "1px solid rgba(255,255,255,0.14)",
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-
-          <label className="mb-2 block text-sm text-white/60">Personnage</label>
-          <div className="mb-5 grid grid-cols-6 gap-2">
-            {AVATAR_SEEDS.map((sd) => {
-              const selected = seed === sd;
+          <label className="mb-2 block text-sm text-white/60">
+            Personnage d'anime
+          </label>
+          <div className="mb-5 grid max-h-56 grid-cols-6 gap-2 overflow-y-auto pr-1">
+            {ANIME_CHARACTERS.map((c) => {
+              const selected = avatar === c.id;
               return (
                 <button
-                  key={sd}
-                  onClick={() => setSeed(sd)}
-                  title={sd}
+                  key={c.id}
+                  onClick={() => setAvatar(c.id)}
+                  title={c.name}
                   className="aspect-square overflow-hidden rounded-full transition"
                   style={{
-                    background: "rgba(255,255,255,0.92)",
+                    background: "rgba(255,255,255,0.06)",
                     boxShadow: selected
-                      ? "0 0 0 2px #fff, 0 0 14px -2px rgba(255,255,255,0.8)"
+                      ? "0 0 0 2px #ff2e9a, 0 0 14px -2px rgba(255,46,154,0.8)"
                       : "0 0 0 1px rgba(255,255,255,0.12)",
                     transform: selected ? "scale(1.1)" : undefined,
                   }}
                 >
                   <img
-                    src={avatarUrl(makeAvatar(style, sd))}
-                    alt={sd}
+                    src={avatarUrl(c.id)}
+                    alt={c.name}
                     loading="lazy"
                     draggable={false}
                     className="h-full w-full"
+                    style={{ objectFit: "cover" }}
                   />
                 </button>
               );

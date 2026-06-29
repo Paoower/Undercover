@@ -41,15 +41,21 @@ export function PlayerCard({
       }
     >
       {isCurrentTurn && (
-        <div className="absolute -top-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black">
+        <div
+          className="absolute -top-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+          style={{ background: "linear-gradient(120deg,#ff2e9a,#8b5cd6)" }}
+        >
           au tour
         </div>
       )}
       {typeof voteCount === "number" && voteCount > 0 && (
         <div
           key={voteCount}
-          className="anim-pop absolute -right-2 -top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-white px-1.5 text-sm font-bold text-black"
-          style={{ boxShadow: "0 0 14px 1px rgba(255,255,255,0.7)" }}
+          className="anim-pop absolute -right-2 -top-2 flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-sm font-bold text-white"
+          style={{
+            background: "linear-gradient(120deg,#ff2e9a,#b91c5c)",
+            boxShadow: "0 0 14px 1px rgba(255,46,154,0.8)",
+          }}
         >
           {voteCount}
         </div>
@@ -80,8 +86,8 @@ export function PlayerCard({
             key={i}
             className="anim-pop break-words rounded-lg px-2 py-1.5 text-center text-sm font-bold leading-tight text-white"
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.25)",
+              background: "linear-gradient(120deg, rgba(139,92,214,0.5), rgba(255,46,154,0.35))",
+              border: "1px solid rgba(255,255,255,0.22)",
             }}
             title={c}
           >
@@ -94,8 +100,16 @@ export function PlayerCard({
         <button
           onClick={onVote}
           className={`mt-2 w-full rounded-lg px-2 py-1.5 text-xs font-bold transition active:scale-95 ${
-            votedByMe ? "bg-white text-black" : "bg-white/10 text-white hover:bg-white/20"
+            votedByMe ? "text-white" : "bg-white/10 text-white hover:bg-white/20"
           }`}
+          style={
+            votedByMe
+              ? {
+                  background: "linear-gradient(120deg,#ff2e9a,#8b5cd6)",
+                  boxShadow: "0 0 14px -2px rgba(255,46,154,0.8)",
+                }
+              : undefined
+          }
         >
           {votedByMe ? "✓ voté" : "Voter"}
         </button>

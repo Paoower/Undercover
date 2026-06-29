@@ -113,12 +113,12 @@ export function Lobby({ room, isHost, onAction, onLeave }: Props) {
             <button
               onClick={() => update({ misterWhiteEnabled: !cfg.misterWhiteEnabled })}
               className={`relative h-7 w-12 rounded-full transition ${
-                cfg.misterWhiteEnabled ? "bg-white" : "bg-white/15"
+                cfg.misterWhiteEnabled ? "bg-aubergine-400" : "bg-white/15"
               }`}
             >
               <span
-                className={`absolute top-1 h-5 w-5 rounded-full transition ${
-                  cfg.misterWhiteEnabled ? "left-6 bg-black" : "left-1 bg-white"
+                className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
+                  cfg.misterWhiteEnabled ? "left-6" : "left-1"
                 }`}
               />
             </button>
@@ -172,17 +172,16 @@ export function Lobby({ room, isHost, onAction, onLeave }: Props) {
                         <button
                           key={p.id}
                           onClick={() => togglePack(p.id)}
-                          className={`rounded-full px-3 py-1.5 text-sm font-semibold transition active:scale-95 ${
-                            on
-                              ? "bg-white text-black"
-                              : "bg-white/5 text-white hover:bg-white/10"
-                          }`}
+                          className="rounded-full px-3 py-1.5 text-sm font-semibold text-white transition active:scale-95"
                           style={{
+                            background: on
+                              ? "linear-gradient(120deg,#ff2e9a,#8b5cd6)"
+                              : "rgba(255,255,255,0.06)",
                             border: on
-                              ? "1px solid #fff"
+                              ? "1px solid rgba(255,255,255,0.3)"
                               : "1px solid rgba(255,255,255,0.14)",
                             boxShadow: on
-                              ? "0 0 14px -3px rgba(255,255,255,0.7)"
+                              ? "0 0 14px -3px rgba(255,46,154,0.8)"
                               : undefined,
                           }}
                         >
