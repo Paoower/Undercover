@@ -109,15 +109,22 @@ export function Lobby({ room, isHost, onAction, onLeave }: Props) {
           </div>
 
           <div className="mb-4">
-            <label className="mb-1 block text-sm text-white/60">Nombre de manches</label>
+            <label className="mb-1 block text-sm text-white/60">
+              Mots par joueur avant le vote : {cfg.cluesPerPlayer}
+            </label>
             <input
-              type="number"
+              type="range"
               min={1}
-              max={20}
-              value={cfg.numRounds}
-              onChange={(e) => update({ numRounds: parseInt(e.target.value, 10) || 1 })}
-              className="input"
+              max={5}
+              value={cfg.cluesPerPlayer}
+              onChange={(e) =>
+                update({ cluesPerPlayer: parseInt(e.target.value, 10) || 2 })
+              }
+              className="w-full accent-aubergine-400"
             />
+            <div className="mt-1 text-xs text-white/40">
+              Le vote démarre automatiquement quand chacun a posé ses {cfg.cluesPerPlayer} mots.
+            </div>
           </div>
 
           <div className="mb-4">

@@ -45,10 +45,10 @@ export function Vote({ room, myId, isHost, onAction }: Props) {
         ))}
       </div>
 
-      {isHost && (
+      {isHost && totalVotes < alivePlayers.length && (
         <div className="mt-6 text-center">
-          <button className="btn-primary" onClick={() => onAction("vote:resolve")}>
-            Révéler le résultat →
+          <button className="btn-ghost" onClick={() => onAction("vote:resolve")}>
+            Forcer le résultat (si un joueur ne vote pas)
           </button>
         </div>
       )}

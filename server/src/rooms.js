@@ -27,11 +27,13 @@ export function createRoom(host) {
       numImpostors: 1,
       misterWhiteEnabled: false,
       wordpackId: "default",
-      numRounds: 10,
+      cluesPerPlayer: 2,
     },
     players: new Map(),
     // Game runtime state
     round: 0,
+    wordNumber: 1, // current word number within a round (1..cluesPerPlayer)
+    baseOrder: [], // alive players order for the current round
     civilWord: null,
     impostorWord: null,
     turnOrder: [],
@@ -144,6 +146,7 @@ export function sanitizeRoomFor(room, viewerId) {
     hostId: room.hostId,
     config: room.config,
     round: room.round,
+    wordNumber: room.wordNumber,
     players,
     currentTurnId,
     you: viewer

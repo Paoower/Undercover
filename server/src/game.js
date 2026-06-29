@@ -21,6 +21,7 @@ export function startGame(room) {
   }
 
   const cfg = room.config;
+  const cluesPerPlayer = Math.max(1, cfg.cluesPerPlayer || 2);
   const wantMisterWhite = cfg.misterWhiteEnabled ? 1 : 0;
   const numImpostors = Math.max(1, Math.min(cfg.numImpostors, players.length - 2));
 
@@ -59,10 +60,20 @@ export function startGame(room) {
   room.misterWhiteGuessPending = null;
   room.winner = null;
   room.winReason = null;
-  // Turn order: shuffled among alive players.
-  room.turnOrder = shuffle(alivePlayers(room).map((p) => p.id));
-  room.currentTurnIndex = 0;
+  buildTurnOrder(room);
   return { ok: true };
+}
+
+// Build the turn sequence for a round: each alive player speaks `cluesPerPlayer`
+// times, cycling through the same shuffled order.
+function buildTurnOrder(room) {
+  const cluesPerPlayer = Math.max(1, room.config.cluesPerPlayer || 2);
+  const base = shuffle(alivePlayers(room).map((p) => p.id));
+  room.baseOrder = base;
+  room.turnOrder = [];
+  for (let c = 0; c < cluesPerPlayer; c++) room.turnOrder.push(...base);
+  room.currentTurnIndex = 0;
+  room.wordNumber = 1;
 }
 
 export function currentTurnPlayerId(room) {
@@ -81,10 +92,20 @@ export function submitClue(room, playerId, clue) {
 
   player.clues.push(text);
 
-  // Advance to next alive player in turn order.
+  // Advance to next player in turn order.
   room.currentTurnIndex++;
-  const allSpoke = room.currentTurnIndex >= room.turnOrder.length;
-  return { ok: true, allSpoke };
+  const base = room.baseOrder.length || 1;
+  room.wordNumber = Math.min(
+    Math.floor(room.currentTurnIndex / base) + 1,
+    room.config.cluesPerPlayer || 2
+  );
+
+  // Everyone gave the configured number of clues -> auto-start voting.
+  if (room.currentTurnIndex >= room.turnOrder.length) {
+    goToVote(room);
+    return { ok: true, autoVote: true };
+  }
+  return { ok: true };
 }
 
 export function goToVote(room) {
@@ -210,19 +231,11 @@ export function nextRound(room) {
     return { ok: true, ended: true };
   }
 
-  if (room.round >= room.config.numRounds) {
-    room.phase = "ended";
-    room.winner = "impostors";
-    room.winReason = "Fin des manches : les imposteurs ont survécu !";
-    return { ok: true, ended: true };
-  }
-
   room.round++;
   room.phase = "playing";
   room.votes = {};
   for (const p of room.players.values()) p.votedFor = null;
-  room.turnOrder = shuffle(alivePlayers(room).map((p) => p.id));
-  room.currentTurnIndex = 0;
+  buildTurnOrder(room);
   return { ok: true, ended: false };
 }
 

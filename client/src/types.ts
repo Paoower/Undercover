@@ -24,7 +24,7 @@ export interface RoomConfig {
   numImpostors: number;
   misterWhiteEnabled: boolean;
   wordpackId: string;
-  numRounds: number;
+  cluesPerPlayer: number;
 }
 
 export interface YouView {
@@ -42,6 +42,7 @@ export interface RoomState {
   hostId: string;
   config: RoomConfig;
   round: number;
+  wordNumber: number;
   players: PlayerView[];
   currentTurnId: string | null;
   you: YouView | null;

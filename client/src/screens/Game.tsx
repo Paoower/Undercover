@@ -31,8 +31,11 @@ export function Game({ room, myId, isHost, onAction }: Props) {
         <div className="text-sm text-white/50">
           Code <span className="font-bold text-aubergine-200">{room.code}</span>
         </div>
-        <div className="chip">
-          🃏 Mot n°{room.round}/{room.config.numRounds}
+        <div className="flex gap-2">
+          <div className="chip">🔁 Manche {room.round}</div>
+          <div className="chip">
+            🃏 Mot n°{room.wordNumber}/{room.config.cluesPerPlayer}
+          </div>
         </div>
       </div>
 
@@ -88,22 +91,12 @@ export function Game({ room, myId, isHost, onAction }: Props) {
         ))}
       </div>
 
-      {/* Host control */}
-      {isHost && (
-        <div className="mt-6 text-center">
-          <button
-            className="btn-primary"
-            onClick={() => onAction("game:goToVote")}
-          >
-            Passer aux votes →
-          </button>
-          {!allSpoke && (
-            <div className="mt-1 text-xs text-white/40">
-              (vous pouvez attendre que tout le monde ait parlé)
-            </div>
-          )}
-        </div>
-      )}
+      {/* The vote starts automatically once everyone has placed their words. */}
+      <div className="mt-6 text-center text-sm text-white/40">
+        {allSpoke
+          ? "Lancement du vote…"
+          : "Le vote démarrera automatiquement quand chacun aura posé ses mots."}
+      </div>
     </div>
   );
 }

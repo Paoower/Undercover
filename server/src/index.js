@@ -55,7 +55,34 @@ if (existsSync(clientDist)) {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*" },
+  // Be tolerant of backgrounded tabs (throttled timers) before declaring a
+  // socket disconnected.
+  pingInterval: 25000,
+  pingTimeout: 60000,
 });
+
+// Grace periods (ms) so a brief disconnect (tab backgrounded, network blip)
+// doesn't destroy the room or the player's seat.
+const PLAYER_GRACE_MS = 120000; // remove a disconnected lobby player after this
+const ROOM_EMPTY_GRACE_MS = 300000; // delete a room with nobody connected
+const playerTimers = new Map(); // `${code}:${pid}` -> timeout
+const roomTimers = new Map(); // code -> timeout
+
+function clearPlayerTimer(code, pid) {
+  const key = `${code}:${pid}`;
+  const t = playerTimers.get(key);
+  if (t) {
+    clearTimeout(t);
+    playerTimers.delete(key);
+  }
+}
+function clearRoomTimer(code) {
+  const t = roomTimers.get(code);
+  if (t) {
+    clearTimeout(t);
+    roomTimers.delete(code);
+  }
+}
 
 // Broadcast a tailored room state to every connected player in the room.
 function broadcastRoom(room) {
@@ -64,6 +91,43 @@ function broadcastRoom(room) {
       io.to(player.socketId).emit("room:state", sanitizeRoomFor(room, player.id));
     }
   }
+}
+
+// Remove a player for good, reassigning host and cleaning up an empty room.
+function removePlayer(room, playerId) {
+  clearPlayerTimer(room.code, playerId);
+  room.players.delete(playerId);
+  if (room.hostId === playerId) {
+    const next = [...room.players.values()][0];
+    if (next) {
+      room.hostId = next.id;
+      next.isHost = true;
+    }
+  }
+  if (room.players.size === 0) {
+    clearRoomTimer(room.code);
+    removeRoom(room.code);
+    return;
+  }
+  broadcastRoom(room);
+}
+
+// If nobody is connected, schedule deletion of the room after a grace period.
+function scheduleRoomCleanup(room) {
+  const anyConnected = [...room.players.values()].some((p) => p.connected);
+  if (anyConnected) {
+    clearRoomTimer(room.code);
+    return;
+  }
+  clearRoomTimer(room.code);
+  roomTimers.set(
+    room.code,
+    setTimeout(() => {
+      roomTimers.delete(room.code);
+      const stillEmpty = [...room.players.values()].every((p) => !p.connected);
+      if (stillEmpty) removeRoom(room.code);
+    }, ROOM_EMPTY_GRACE_MS)
+  );
 }
 
 io.on("connection", (socket) => {
@@ -75,7 +139,13 @@ io.on("connection", (socket) => {
     socket.data.code = room.code;
     socket.data.playerId = playerId;
     const player = room.players.get(playerId);
-    if (player) player.socketId = socket.id;
+    if (player) {
+      player.socketId = socket.id;
+      player.connected = true;
+    }
+    // Reconnected: cancel any pending removal/cleanup.
+    clearPlayerTimer(room.code, playerId);
+    clearRoomTimer(room.code);
     socket.join(room.code);
   }
 
@@ -136,7 +206,7 @@ io.on("connection", (socket) => {
       numImpostors: Math.max(1, parseInt(config.numImpostors, 10) || 1),
       misterWhiteEnabled: !!config.misterWhiteEnabled,
       wordpackId: config.wordpackId || "default",
-      numRounds: Math.max(1, parseInt(config.numRounds, 10) || 10),
+      cluesPerPlayer: Math.min(5, Math.max(1, parseInt(config.cluesPerPlayer, 10) || 2)),
     };
     cb?.({ ok: true });
     broadcastRoom(room);
@@ -175,6 +245,8 @@ io.on("connection", (socket) => {
     if (!room) return cb?.({ ok: false, error: "Room introuvable" });
     const res = castVote(room, socket.data.playerId, targetId);
     if (res.error) return cb?.({ ok: false, error: res.error });
+    // Auto-resolve once every alive player has voted.
+    if (res.allVoted) resolveVotes(room);
     cb?.({ ok: true });
     broadcastRoom(room);
   });
@@ -230,26 +302,32 @@ io.on("connection", (socket) => {
 
   function handleLeave(room, player, hard) {
     if (!player) return;
-    if (room.phase === "lobby" || hard) {
-      // In lobby (or explicit leave): remove the player entirely.
-      room.players.delete(player.id);
-      // Reassign host if needed.
-      if (room.hostId === player.id) {
-        const next = [...room.players.values()][0];
-        if (next) {
-          room.hostId = next.id;
-          next.isHost = true;
-        }
-      }
-      if (room.players.size === 0) {
-        removeRoom(room.code);
-        return;
-      }
-    } else {
-      // Mid-game: keep their seat but mark disconnected for reconnection.
-      player.connected = false;
-      player.socketId = null;
+
+    if (hard) {
+      // Explicit leave: remove immediately.
+      removePlayer(room, player.id);
+      return;
     }
+
+    // Disconnect: keep the seat for reconnection, just mark as disconnected.
+    player.connected = false;
+    player.socketId = null;
+
+    if (room.phase === "lobby") {
+      // Lobby has no turn dependency: drop ghost players after a grace period.
+      const key = `${room.code}:${player.id}`;
+      clearPlayerTimer(room.code, player.id);
+      playerTimers.set(
+        key,
+        setTimeout(() => {
+          playerTimers.delete(key);
+          const p = room.players.get(player.id);
+          if (p && !p.connected) removePlayer(room, player.id);
+        }, PLAYER_GRACE_MS)
+      );
+    }
+
+    scheduleRoomCleanup(room);
     broadcastRoom(room);
   }
 });

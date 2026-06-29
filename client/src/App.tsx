@@ -77,10 +77,24 @@ export default function App() {
       screen = null;
   }
 
+  const showLeave = ["playing", "voting", "reveal", "misterwhite"].includes(
+    room.phase
+  );
+
   return (
     <>
       <AnimatedBackground />
-      <div key={room.phase} className="anim-fade-up">
+      {showLeave && (
+        <button
+          className="btn-ghost fixed left-3 top-3 z-40 px-3 py-2 text-sm"
+          onClick={() => {
+            if (confirm("Quitter la partie ?")) game.leaveRoom();
+          }}
+        >
+          ← Quitter
+        </button>
+      )}
+      <div key={room.phase} className={`anim-fade-up ${showLeave ? "pt-14" : ""}`}>
         {screen}
       </div>
       <Toast error={game.error} />

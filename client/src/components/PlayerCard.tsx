@@ -80,11 +80,16 @@ export function PlayerCard({
       )}
 
       {/* Stacked clues */}
-      <div className="mt-2 flex w-full flex-col gap-1">
+      <div className="mt-2 flex w-full flex-col gap-1.5">
         {player.clues.map((c, i) => (
           <div
             key={i}
-            className="anim-pop truncate rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-center text-xs text-aubergine-100"
+            className="anim-pop break-words rounded-lg px-2 py-1.5 text-center text-sm font-bold leading-tight text-white"
+            style={{
+              background: "linear-gradient(120deg, rgba(139,92,214,0.45), rgba(255,46,154,0.30))",
+              border: "1px solid rgba(255,255,255,0.22)",
+              boxShadow: "0 2px 10px -3px rgba(0,0,0,0.5)",
+            }}
             title={c}
           >
             {c}
