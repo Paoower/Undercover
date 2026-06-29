@@ -15,7 +15,7 @@ export default function App() {
     return (
       <>
         <AnimatedBackground />
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-white/60">
+        <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-4 text-white/60">
           <div className="text-5xl anim-floaty">🕵️</div>
           <div className="animate-pulse">Connexion au serveur…</div>
         </div>
@@ -27,7 +27,9 @@ export default function App() {
     return (
       <>
         <AnimatedBackground />
-        <Home onCreate={game.createRoom} onJoin={game.joinRoom} />
+        <div className="relative z-10">
+          <Home onCreate={game.createRoom} onJoin={game.joinRoom} />
+        </div>
         <Toast error={game.error} />
       </>
     );
@@ -94,7 +96,10 @@ export default function App() {
           ← Quitter
         </button>
       )}
-      <div key={room.phase} className={`anim-fade-up ${showLeave ? "pt-14" : ""}`}>
+      <div
+        key={room.phase}
+        className={`relative z-10 anim-fade-up ${showLeave ? "pt-14" : ""}`}
+      >
         {screen}
       </div>
       <Toast error={game.error} />

@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { AVATARS } from "../avatars";
-import { Glyph } from "../components/Glyph";
+import {
+  AVATAR_STYLES,
+  AVATAR_SEEDS,
+  avatarUrl,
+  makeAvatar,
+} from "../avatars";
 
 interface Props {
   onCreate: (pseudo: string, avatar: string) => void;
@@ -10,9 +14,11 @@ interface Props {
 export function Home({ onCreate, onJoin }: Props) {
   const [mode, setMode] = useState<"home" | "create" | "join">("home");
   const [pseudo, setPseudo] = useState("");
-  const [avatar, setAvatar] = useState(AVATARS[0].id);
+  const [style, setStyle] = useState(AVATAR_STYLES[0].id);
+  const [seed, setSeed] = useState(AVATAR_SEEDS[0]);
   const [code, setCode] = useState("");
 
+  const avatar = makeAvatar(style, seed);
   const canSubmit = pseudo.trim().length >= 2;
 
   return (
@@ -64,26 +70,57 @@ export function Home({ onCreate, onJoin }: Props) {
             onChange={(e) => setPseudo(e.target.value)}
           />
 
-          <label className="mb-2 block text-sm text-white/60">Avatar</label>
-          <div className="mb-5 grid grid-cols-6 gap-2">
-            {AVATARS.map((a) => (
+          <label className="mb-2 block text-sm text-white/60">Style d'avatar</label>
+          <div className="mb-3 flex flex-wrap gap-2">
+            {AVATAR_STYLES.map((s) => (
               <button
-                key={a.id}
-                onClick={() => setAvatar(a.id)}
-                className="flex aspect-square items-center justify-center rounded-full text-white transition"
+                key={s.id}
+                onClick={() => setStyle(s.id)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition active:scale-95 ${
+                  style === s.id
+                    ? "bg-white text-black"
+                    : "bg-white/5 text-white hover:bg-white/10"
+                }`}
                 style={{
-                  background:
-                    avatar === a.id ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.04)",
-                  boxShadow:
-                    avatar === a.id
-                      ? "0 0 0 2px #fff, 0 0 14px -2px rgba(255,255,255,0.7)"
-                      : "0 0 0 1px rgba(255,255,255,0.12)",
-                  transform: avatar === a.id ? "scale(1.1)" : undefined,
+                  border:
+                    style === s.id
+                      ? "1px solid #fff"
+                      : "1px solid rgba(255,255,255,0.14)",
                 }}
               >
-                <Glyph shape={a.shape} size={24} />
+                {s.label}
               </button>
             ))}
+          </div>
+
+          <label className="mb-2 block text-sm text-white/60">Personnage</label>
+          <div className="mb-5 grid grid-cols-6 gap-2">
+            {AVATAR_SEEDS.map((sd) => {
+              const selected = seed === sd;
+              return (
+                <button
+                  key={sd}
+                  onClick={() => setSeed(sd)}
+                  title={sd}
+                  className="aspect-square overflow-hidden rounded-full transition"
+                  style={{
+                    background: "rgba(255,255,255,0.92)",
+                    boxShadow: selected
+                      ? "0 0 0 2px #fff, 0 0 14px -2px rgba(255,255,255,0.8)"
+                      : "0 0 0 1px rgba(255,255,255,0.12)",
+                    transform: selected ? "scale(1.1)" : undefined,
+                  }}
+                >
+                  <img
+                    src={avatarUrl(makeAvatar(style, sd))}
+                    alt={sd}
+                    loading="lazy"
+                    draggable={false}
+                    className="h-full w-full"
+                  />
+                </button>
+              );
+            })}
           </div>
 
           <button

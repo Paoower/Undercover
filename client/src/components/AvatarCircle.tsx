@@ -1,5 +1,4 @@
-import { avatarById } from "../avatars";
-import { Glyph } from "./Glyph";
+import { avatarUrl } from "../avatars";
 
 interface Props {
   avatarId: string;
@@ -9,19 +8,26 @@ interface Props {
 }
 
 export function AvatarCircle({ avatarId, size = 56, dim = false, ring = true }: Props) {
-  const a = avatarById(avatarId);
   return (
     <div
-      className="flex items-center justify-center rounded-full text-white transition"
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full transition"
       style={{
         width: size,
         height: size,
-        background: "rgba(255,255,255,0.06)",
-        boxShadow: ring ? "0 0 0 1px rgba(255,255,255,0.35)" : undefined,
+        background: "rgba(255,255,255,0.92)",
+        boxShadow: ring ? "0 0 0 1px rgba(255,255,255,0.4)" : undefined,
         opacity: dim ? 0.4 : 1,
       }}
     >
-      <Glyph shape={a.shape} size={size * 0.5} />
+      <img
+        src={avatarUrl(avatarId)}
+        alt=""
+        width={size}
+        height={size}
+        loading="lazy"
+        draggable={false}
+        style={{ width: size, height: size }}
+      />
     </div>
   );
 }
