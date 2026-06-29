@@ -105,11 +105,9 @@ export default function App() {
 function Toast({ error }: { error: string | null }) {
   if (!error) return null;
   return (
-    <div className="anim-pop fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl px-5 py-3 font-semibold text-white shadow-lg"
-      style={{
-        background: "linear-gradient(120deg, #ff2e9a, #b91c5c)",
-        boxShadow: "0 10px 30px -6px rgba(255,46,154,0.7)",
-      }}
+    <div
+      className="anim-pop fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-white px-5 py-3 font-semibold text-black"
+      style={{ boxShadow: "0 10px 30px -8px rgba(255,255,255,0.5)" }}
     >
       ⚠️ {error}
     </div>

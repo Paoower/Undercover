@@ -4,9 +4,6 @@
 
 :root {
   color-scheme: dark;
-  --neon-pink: #ff2e9a;
-  --neon-purple: #8b5cd6;
-  --neon-cyan: #22d3ee;
 }
 
 * {
@@ -16,91 +13,21 @@
 body {
   margin: 0;
   font-family: "Poppins", system-ui, sans-serif;
-  background: #0c0518;
+  background: #000;
   min-height: 100vh;
-  color: #f3eaff;
+  color: #f5f5f5;
   overflow-x: hidden;
 }
 
-/* ---------- Animated aurora background ---------- */
-.aurora {
+/* The animated canvas background sits behind everything. */
+.bg-canvas {
   position: fixed;
   inset: 0;
-  z-index: -2;
-  overflow: hidden;
-  background:
-    radial-gradient(60% 50% at 50% -10%, #2d1650 0%, transparent 70%),
-    #0c0518;
-}
-.aurora::before,
-.aurora::after {
-  content: "";
-  position: absolute;
-  width: 55vw;
-  height: 55vw;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.55;
-  mix-blend-mode: screen;
-}
-.aurora::before {
-  background: radial-gradient(circle, #ff2e9a 0%, transparent 60%);
-  top: -10%;
-  left: -10%;
-  animation: drift1 18s ease-in-out infinite alternate;
-}
-.aurora::after {
-  background: radial-gradient(circle, #22d3ee 0%, transparent 60%);
-  bottom: -15%;
-  right: -10%;
-  animation: drift2 22s ease-in-out infinite alternate;
-}
-.aurora .blob {
-  position: absolute;
-  width: 40vw;
-  height: 40vw;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.4;
-  background: radial-gradient(circle, #8b5cd6 0%, transparent 60%);
-  top: 30%;
-  left: 35%;
-  animation: drift3 26s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
-}
-/* subtle grid texture */
-.aurora .grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(circle at 50% 30%, black, transparent 75%);
+  z-index: -1;
+  display: block;
 }
 
-@keyframes drift1 {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(15vw, 10vh) scale(1.2); }
-}
-@keyframes drift2 {
-  from { transform: translate(0, 0) scale(1.1); }
-  to { transform: translate(-12vw, -8vh) scale(1); }
-}
-@keyframes drift3 {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(-10vw, 12vh) scale(1.3); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aurora::before,
-  .aurora::after,
-  .aurora .blob {
-    animation: none;
-  }
-}
-
-/* ---------- Entrance animations ---------- */
+/* ---------- Entrance / ambient animations ---------- */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
@@ -111,8 +38,8 @@ body {
   100% { opacity: 1; transform: scale(1); }
 }
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 2px var(--neon-purple), 0 0 22px -2px var(--neon-purple); }
-  50% { box-shadow: 0 0 0 2px var(--neon-pink), 0 0 34px 2px var(--neon-pink); }
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 0 18px -2px rgba(255,255,255,0.35); }
+  50% { box-shadow: 0 0 0 1px rgba(255,255,255,0.9), 0 0 30px 2px rgba(255,255,255,0.6); }
 }
 @keyframes shimmer {
   to { background-position: 200% center; }
@@ -126,104 +53,102 @@ body {
 .anim-pop { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 .anim-floaty { animation: floaty 4s ease-in-out infinite; }
 
+@media (prefers-reduced-motion: reduce) {
+  .anim-floaty { animation: none; }
+}
+
 @layer components {
   .btn {
     @apply relative inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40;
   }
+  /* Primary = solid white on black (minimal, high contrast). */
   .btn-primary {
-    @apply btn text-white;
-    background: linear-gradient(120deg, #ff2e9a, #8b5cd6 55%, #6b3fb0);
-    box-shadow: 0 8px 24px -6px rgba(255, 46, 154, 0.6),
-      0 2px 0 0 rgba(255, 255, 255, 0.12) inset;
+    @apply btn bg-white text-black;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 8px 24px -10px rgba(255, 255, 255, 0.5);
   }
   .btn-primary:hover:not(:disabled) {
-    box-shadow: 0 10px 32px -4px rgba(255, 46, 154, 0.8),
-      0 2px 0 0 rgba(255, 255, 255, 0.18) inset;
     transform: translateY(-1px);
+    box-shadow: 0 0 0 1px #fff, 0 10px 30px -8px rgba(255, 255, 255, 0.7);
   }
   .btn-ghost {
-    @apply btn text-aubergine-100;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    @apply btn text-white;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(8px);
   }
   .btn-ghost:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(139, 92, 214, 0.6);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
   }
   .card {
     @apply rounded-2xl;
-    background: linear-gradient(
-      160deg,
-      rgba(255, 255, 255, 0.09),
-      rgba(255, 255, 255, 0.03)
-    );
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(14px);
-    box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 40px -16px rgba(0, 0, 0, 0.8);
   }
   .card-glow {
-    box-shadow: 0 0 0 1px rgba(139, 92, 214, 0.5),
-      0 0 30px -6px rgba(139, 92, 214, 0.55),
-      0 12px 40px -12px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22),
+      0 0 40px -10px rgba(255, 255, 255, 0.25),
+      0 12px 40px -16px rgba(0, 0, 0, 0.8);
   }
   .input {
-    @apply w-full rounded-xl px-4 py-3 text-white placeholder-white/30 outline-none transition;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    @apply w-full rounded-xl px-4 py-3 text-white placeholder-white/25 outline-none transition;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.15);
   }
   .input:focus {
-    border-color: var(--neon-purple);
-    box-shadow: 0 0 0 3px rgba(139, 92, 214, 0.25);
+    border-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
   }
   .neon-title {
-    background: linear-gradient(100deg, #ffffff, #d8c6f5 40%, #ff8fce 70%, #ffffff);
+    background: linear-gradient(100deg, #ffffff, #8a8a8a 45%, #ffffff 70%, #d4d4d4);
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     animation: shimmer 6s linear infinite;
-    text-shadow: 0 0 40px rgba(255, 46, 154, 0.25);
+    text-shadow: 0 0 36px rgba(255, 255, 255, 0.18);
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
   }
 }
 
-/* custom range slider */
+/* custom range slider (monochrome) */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #ff2e9a, #8b5cd6);
+  background: rgba(255, 255, 255, 0.25);
   outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #fff;
   cursor: pointer;
-  box-shadow: 0 0 12px 2px rgba(255, 46, 154, 0.7);
+  box-shadow: 0 0 10px 1px rgba(255, 255, 255, 0.6);
 }
 input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: none;
   border-radius: 50%;
   background: #fff;
   cursor: pointer;
-  box-shadow: 0 0 12px 2px rgba(255, 46, 154, 0.7);
+  box-shadow: 0 0 10px 1px rgba(255, 255, 255, 0.6);
 }
 
 /* thin scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 214, 0.5);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 999px;
 }

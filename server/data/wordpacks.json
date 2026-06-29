@@ -806,5 +806,59 @@
       { "civil": "Mage", "imposteur": "Démon" },
       { "civil": "Examen de Mage", "imposteur": "Première Classe" }
     ]
+  },
+  {
+    "id": "crossover",
+    "name": "Crossover (mélange d'animes)",
+    "theme": "Anime",
+    "pairs": [
+      { "civil": "Hisoka", "imposteur": "Doflamingo" },
+      { "civil": "Luffy", "imposteur": "Naruto" },
+      { "civil": "Goku", "imposteur": "Saitama" },
+      { "civil": "Zoro", "imposteur": "Kenpachi" },
+      { "civil": "Gojo", "imposteur": "Aizen" },
+      { "civil": "Sukuna", "imposteur": "Yhwach" },
+      { "civil": "Eren", "imposteur": "Lelouch" },
+      { "civil": "Light", "imposteur": "Lelouch" },
+      { "civil": "Killua", "imposteur": "Zenitsu" },
+      { "civil": "Levi", "imposteur": "Zoro" },
+      { "civil": "Madara", "imposteur": "Aizen" },
+      { "civil": "Vegeta", "imposteur": "Bakugo" },
+      { "civil": "Shanks", "imposteur": "Jiraiya" },
+      { "civil": "Tanjiro", "imposteur": "Yuji" },
+      { "civil": "Itachi", "imposteur": "Gojo" },
+      { "civil": "All Might", "imposteur": "Might Guy" },
+      { "civil": "Meliodas", "imposteur": "Natsu" },
+      { "civil": "Mob", "imposteur": "Saiki" },
+      { "civil": "Escanor", "imposteur": "Saitama" },
+      { "civil": "Mikasa", "imposteur": "Erza" }
+    ]
+  },
+  {
+    "id": "clinsdoeil",
+    "name": "Clins d'œil & délires",
+    "theme": "Anime",
+    "pairs": [
+      { "civil": "Doflamingo", "imposteur": "Flamant rose" },
+      { "civil": "One Piece", "imposteur": "Pirates des Caraïbes" },
+      { "civil": "Ryuk", "imposteur": "Pomme" },
+      { "civil": "Usopp", "imposteur": "Sogeking" },
+      { "civil": "Naruto", "imposteur": "Ramen" },
+      { "civil": "Luffy", "imposteur": "Viande" },
+      { "civil": "Goku", "imposteur": "Nuage Magique" },
+      { "civil": "Pikachu", "imposteur": "Éclair" },
+      { "civil": "Kakashi", "imposteur": "Livre" },
+      { "civil": "Jiraiya", "imposteur": "Crapaud" },
+      { "civil": "Sanji", "imposteur": "Cigarette" },
+      { "civil": "Nami", "imposteur": "Argent" },
+      { "civil": "Zoro", "imposteur": "Boussole" },
+      { "civil": "Light", "imposteur": "Cahier" },
+      { "civil": "Eren", "imposteur": "Liberté" },
+      { "civil": "Tanjiro", "imposteur": "Boucles d'oreilles" },
+      { "civil": "Saitama", "imposteur": "Crâne chauve" },
+      { "civil": "Sasuke", "imposteur": "Vengeance" },
+      { "civil": "Gon", "imposteur": "Canne à pêche" },
+      { "civil": "Nui", "imposteur": "Ciseaux" }
+    ]
   }
 ]

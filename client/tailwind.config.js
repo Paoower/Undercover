@@ -4,17 +4,20 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Monochrome ramp. Kept under the "aubergine" name so existing
+        // utility classes (text-aubergine-200, ring-aubergine-400, …) map to
+        // the black & white theme without touching every component.
         aubergine: {
-          100: "#ede4fb",
-          200: "#d8c6f5",
-          950: "#190a26",
-          900: "#22103a",
-          800: "#2d1650",
-          700: "#3b1d66",
-          600: "#4d2a85",
-          500: "#6b3fb0",
-          400: "#8b5cd6",
-          300: "#b18cf0",
+          100: "#fafafa",
+          200: "#e5e5e5",
+          300: "#a3a3a3",
+          400: "#ededed",
+          500: "#737373",
+          600: "#3a3a3a",
+          700: "#262626",
+          800: "#171717",
+          900: "#101010",
+          950: "#0a0a0a",
         },
       },
       fontFamily: {

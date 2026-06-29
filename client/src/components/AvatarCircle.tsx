@@ -1,4 +1,5 @@
 import { avatarById } from "../avatars";
+import { Glyph } from "./Glyph";
 
 interface Props {
   avatarId: string;
@@ -11,19 +12,16 @@ export function AvatarCircle({ avatarId, size = 56, dim = false, ring = true }: 
   const a = avatarById(avatarId);
   return (
     <div
-      className="flex items-center justify-center rounded-full transition"
+      className="flex items-center justify-center rounded-full text-white transition"
       style={{
         width: size,
         height: size,
-        fontSize: size * 0.55,
-        background: `radial-gradient(circle at 50% 35%, ${a.color}44, ${a.color}11)`,
-        boxShadow: ring
-          ? `0 0 0 2px ${a.color}, 0 0 18px -4px ${a.color}`
-          : undefined,
-        filter: dim ? "grayscale(1) opacity(0.45)" : undefined,
+        background: "rgba(255,255,255,0.06)",
+        boxShadow: ring ? "0 0 0 1px rgba(255,255,255,0.35)" : undefined,
+        opacity: dim ? 0.4 : 1,
       }}
     >
-      <span>{a.emoji}</span>
+      <Glyph shape={a.shape} size={size * 0.5} />
     </div>
   );
 }

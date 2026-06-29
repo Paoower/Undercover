@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AVATARS } from "../avatars";
+import { Glyph } from "../components/Glyph";
 
 interface Props {
   onCreate: (pseudo: string, avatar: string) => void;
@@ -69,15 +70,18 @@ export function Home({ onCreate, onJoin }: Props) {
               <button
                 key={a.id}
                 onClick={() => setAvatar(a.id)}
-                className="flex aspect-square items-center justify-center rounded-full text-2xl transition"
+                className="flex aspect-square items-center justify-center rounded-full text-white transition"
                 style={{
-                  background: `${a.color}22`,
+                  background:
+                    avatar === a.id ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.04)",
                   boxShadow:
-                    avatar === a.id ? `0 0 0 3px ${a.color}` : `0 0 0 1px #ffffff15`,
+                    avatar === a.id
+                      ? "0 0 0 2px #fff, 0 0 14px -2px rgba(255,255,255,0.7)"
+                      : "0 0 0 1px rgba(255,255,255,0.12)",
                   transform: avatar === a.id ? "scale(1.1)" : undefined,
                 }}
               >
-                {a.emoji}
+                <Glyph shape={a.shape} size={24} />
               </button>
             ))}
           </div>
