@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { emit } from "../socket";
 import type { PackSummary, WordPack, WordPair } from "../types";
+import { getUserId, setUserId } from "../user";
 
 interface Props {
   onClose: () => void;
@@ -8,15 +9,17 @@ interface Props {
 }
 
 export function WordpackManager({ onClose, onChanged }: Props) {
+  const [userId, setUid] = useState(getUserId());
   const [packs, setPacks] = useState<PackSummary[]>([]);
   const [editing, setEditing] = useState<WordPack | null>(null);
   const [bulk, setBulk] = useState("");
   const [civil, setCivil] = useState("");
   const [imposteur, setImposteur] = useState("");
+  const [idInput, setIdInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  async function refresh() {
-    const list = await emit<PackSummary[]>("wordpacks:list");
+  async function refresh(uid = userId) {
+    const list = await emit<PackSummary[]>("wordpacks:list", { userId: uid });
     setPacks(list);
     onChanged(list);
   }
@@ -25,27 +28,39 @@ export function WordpackManager({ onClose, onChanged }: Props) {
     refresh();
   }, []);
 
+  const owned = packs.filter((p) => p.owned);
+  const shared = packs.filter((p) => p.shared);
+  const editingOwned = !!editing && editing.ownerId === userId;
+
   async function openPack(id: string) {
     const pack = await emit<WordPack | null>("wordpacks:get", id);
     if (pack) setEditing(pack);
   }
 
   function newPack() {
-    setEditing({ id: "", name: "Nouveau pack", theme: "", pairs: [] });
+    setEditing({ id: "", name: "Nouveau pack", theme: "", pairs: [], ownerId: userId });
   }
 
   async function save() {
     if (!editing) return;
-    await emit("wordpacks:save", editing);
+    await emit("wordpacks:save", { ...editing, userId });
     await refresh();
     setEditing(null);
   }
 
   async function removePack(id: string) {
     if (!confirm("Supprimer ce pack ?")) return;
-    await emit("wordpacks:delete", id);
+    await emit("wordpacks:delete", { id, userId });
     if (editing?.id === id) setEditing(null);
     refresh();
+  }
+
+  function restoreId() {
+    const next = setUserId(idInput);
+    setUid(next);
+    setIdInput("");
+    setEditing(null);
+    refresh(next);
   }
 
   async function applyBulk() {
@@ -95,6 +110,7 @@ export function WordpackManager({ onClose, onChanged }: Props) {
           name: data.name || "Pack importé",
           theme: data.theme || "",
           pairs: Array.isArray(data.pairs) ? data.pairs : [],
+          ownerId: userId,
         });
       } catch {
         alert("Fichier JSON invalide");
@@ -102,6 +118,33 @@ export function WordpackManager({ onClose, onChanged }: Props) {
     };
     reader.readAsText(file);
     e.target.value = "";
+  }
+
+  function packRow(p: PackSummary) {
+    return (
+      <div
+        key={p.id}
+        className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
+          editing?.id === p.id ? "bg-aubergine-600" : "bg-white/5"
+        }`}
+      >
+        <button className="flex-1 text-left" onClick={() => openPack(p.id)}>
+          <div className="font-semibold">{p.name}</div>
+          <div className="text-xs text-white/50">
+            {p.count} paires {p.theme && `· ${p.theme}`}
+          </div>
+        </button>
+        {p.owned && (
+          <button
+            className="text-red-300 hover:text-red-200"
+            onClick={() => removePack(p.id)}
+            title="Supprimer"
+          >
+            🗑
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -114,9 +157,10 @@ export function WordpackManager({ onClose, onChanged }: Props) {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 overflow-auto p-4 md:grid-cols-[220px_1fr]">
+        {/* Each column scrolls on its own (md+); the grid itself stays fixed. */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto p-4 md:grid-cols-[240px_1fr] md:overflow-hidden">
           {/* Pack list */}
-          <div className="flex flex-col gap-2">
+          <div className="flex min-h-0 flex-col gap-2 md:overflow-y-auto md:pr-1">
             <button className="btn-primary py-2 text-sm" onClick={newPack}>
               + Nouveau pack
             </button>
@@ -133,35 +177,66 @@ export function WordpackManager({ onClose, onChanged }: Props) {
               className="hidden"
               onChange={importPack}
             />
-            <div className="mt-2 flex flex-col gap-1">
-              {packs.map((p) => (
-                <div
-                  key={p.id}
-                  className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
-                    editing?.id === p.id ? "bg-aubergine-600" : "bg-white/5"
-                  }`}
+
+            {/* Identity: reuse this id on another device to recover your packs */}
+            <div className="mt-2 rounded-lg bg-black/30 p-2 text-xs">
+              <div className="mb-1 text-white/50">Mon identifiant</div>
+              <div className="flex items-center gap-1">
+                <code className="flex-1 truncate text-aubergine-200">{userId}</code>
+                <button
+                  className="btn-ghost px-2 py-1"
+                  title="Copier"
+                  onClick={() => navigator.clipboard?.writeText(userId)}
                 >
-                  <button className="flex-1 text-left" onClick={() => openPack(p.id)}>
-                    <div className="font-semibold">{p.name}</div>
-                    <div className="text-xs text-white/50">
-                      {p.count} paires {p.theme && `· ${p.theme}`}
-                    </div>
-                  </button>
-                  <button
-                    className="text-red-300 hover:text-red-200"
-                    onClick={() => removePack(p.id)}
-                    title="Supprimer"
-                  >
-                    🗑
-                  </button>
+                  ⧉
+                </button>
+              </div>
+              <div className="mt-2 flex items-center gap-1">
+                <input
+                  className="input py-1 text-xs"
+                  placeholder="Restaurer un ID…"
+                  value={idInput}
+                  onChange={(e) => setIdInput(e.target.value)}
+                />
+                <button
+                  className="btn-ghost shrink-0 px-2 py-1"
+                  disabled={!idInput.trim()}
+                  onClick={restoreId}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-2 flex flex-col gap-1">
+              <div className="text-xs uppercase tracking-wide text-aubergine-300">
+                Mes packs
+              </div>
+              {owned.length === 0 && (
+                <div className="px-1 py-2 text-xs text-white/40">
+                  Aucun pack perso. Crée ou duplique un pack pour le sauvegarder.
                 </div>
-              ))}
+              )}
+              {owned.map(packRow)}
+
+              {shared.length > 0 && (
+                <div className="mt-3 text-xs uppercase tracking-wide text-aubergine-300">
+                  Packs partagés
+                </div>
+              )}
+              {shared.map(packRow)}
             </div>
           </div>
 
           {/* Editor */}
           {editing ? (
-            <div className="flex flex-col gap-3">
+            <div className="flex min-h-0 flex-col gap-3 md:overflow-y-auto md:pr-1">
+              {!editingOwned && (
+                <div className="rounded-lg bg-aubergine-600/40 px-3 py-2 text-xs text-white/80">
+                  Pack partagé en lecture seule — « Enregistrer » en créera une copie
+                  dans <strong>Mes packs</strong>.
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <input
                   className="input"
@@ -240,7 +315,9 @@ export function WordpackManager({ onClose, onChanged }: Props) {
 
               <div className="flex gap-2">
                 <button className="btn-primary flex-1" onClick={save}>
-                  💾 Enregistrer ({editing.pairs.length} paires)
+                  {editingOwned
+                    ? `💾 Enregistrer (${editing.pairs.length} paires)`
+                    : `💾 Copier dans mes packs (${editing.pairs.length} paires)`}
                 </button>
                 <button className="btn-ghost" onClick={exportPack}>
                   ⬇ Export JSON

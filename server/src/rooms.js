@@ -29,6 +29,11 @@ export function createRoom(host) {
       misterWhiteEnabled: false,
       wordpackIds: defaultPackIds(),
       cluesPerPlayer: 2,
+      turnSeconds: 60, // per-turn time limit in seconds (0 = unlimited)
+      voteSeconds: 60, // voting phase time limit in seconds (0 = unlimited)
+      hideRolesUntilEnd: true, // hide civil/impostor distinction until game end
+      showVoteCounts: false, // show per-player vote tallies on the end/reveal screen
+      continueGame: true, // keep playing rounds until a camp wins (else end after 1st vote)
     },
     players: new Map(),
     // Game runtime state
@@ -37,13 +42,18 @@ export function createRoom(host) {
     baseOrder: [], // alive players order for the current round
     civilWord: null,
     impostorWord: null,
+    cluesThisRound: 1, // number of clues each player gives in the current round
     turnOrder: [],
     currentTurnIndex: 0,
     votes: {}, // voterId -> targetId
+    lastVoteCounts: {}, // targetId -> count, from the last resolved vote
     lastEliminated: null, // {id, pseudo, role, avatar}
     misterWhiteGuessPending: null, // playerId awaiting guess
     winner: null, // 'civils' | 'impostors'
     winReason: null,
+    // Server-authoritative deadlines (epoch ms) for the current turn / vote.
+    turnDeadline: null,
+    voteDeadline: null,
   };
   room.players.set(playerId, makePlayer(playerId, host, true));
   rooms.set(code, room);
@@ -63,6 +73,7 @@ function makePlayer(id, { pseudo, avatar }, isHost) {
     alive: true,
     clues: [], // string per round
     votedFor: null,
+    ready: false, // "ready to replay" flag on the end screen
   };
 }
 
@@ -110,7 +121,8 @@ export function removeRoom(code) {
 // Return a view of the room tailored to one player (hides other players' secrets).
 export function sanitizeRoomFor(room, viewerId) {
   const viewer = room.players.get(viewerId);
-  const revealAll = room.phase === "ended" || room.phase === "reveal";
+  const gameOver = room.phase === "ended";
+  const hideRoles = !!room.config.hideRolesUntilEnd && !gameOver;
 
   const players = [...room.players.values()].map((p) => {
     const base = {
@@ -122,9 +134,14 @@ export function sanitizeRoomFor(room, viewerId) {
       alive: p.alive,
       clues: p.clues,
       hasVoted: room.phase === "voting" ? p.votedFor !== null : false,
+      ready: p.ready,
     };
-    // Reveal role/word for: the viewer themselves, eliminated players, or end game.
-    if (p.id === viewerId || !p.alive || revealAll) {
+    // Reveal role/word for the viewer themselves always; for other players only
+    // when the game is over, or (when roles aren't being hidden) for eliminated
+    // players and during the reveal phase.
+    const revealOther =
+      gameOver || (!hideRoles && (!p.alive || room.phase === "reveal"));
+    if (p.id === viewerId || revealOther) {
       base.role = p.role;
       base.word = p.word;
     }
@@ -133,12 +150,15 @@ export function sanitizeRoomFor(room, viewerId) {
 
   const currentTurnId = room.turnOrder[room.currentTurnIndex] || null;
 
-  // Vote tally is public during voting.
+  // Per-player vote tallies stay hidden during voting (so live counts can't sway
+  // votes). They're surfaced only after resolution, and only if the host enabled
+  // "show vote counts".
   const voteCounts = {};
-  if (room.phase === "voting") {
-    for (const targetId of Object.values(room.votes)) {
-      voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
-    }
+  if (
+    room.config.showVoteCounts &&
+    (room.phase === "reveal" || room.phase === "misterwhite" || gameOver)
+  ) {
+    Object.assign(voteCounts, room.lastVoteCounts || {});
   }
 
   return {
@@ -148,6 +168,7 @@ export function sanitizeRoomFor(room, viewerId) {
     config: room.config,
     round: room.round,
     wordNumber: room.wordNumber,
+    cluesThisRound: room.cluesThisRound,
     players,
     currentTurnId,
     you: viewer
@@ -161,6 +182,9 @@ export function sanitizeRoomFor(room, viewerId) {
         }
       : null,
     voteCounts,
+    hideRoles,
+    turnDeadline: room.phase === "playing" ? room.turnDeadline : null,
+    voteDeadline: room.phase === "voting" ? room.voteDeadline : null,
     lastEliminated: room.lastEliminated,
     misterWhiteGuessPending: room.misterWhiteGuessPending,
     winner: room.winner,

@@ -17,12 +17,15 @@ import {
 import {
   startGame,
   submitClue,
+  timeoutTurn,
   goToVote,
   castVote,
   resolveVotes,
   misterWhiteGuess,
   nextRound,
   restartGame,
+  setReady,
+  allReady,
 } from "./game.js";
 import {
   listPacks,
@@ -67,6 +70,73 @@ const PLAYER_GRACE_MS = 120000; // remove a disconnected lobby player after this
 const ROOM_EMPTY_GRACE_MS = 300000; // delete a room with nobody connected
 const playerTimers = new Map(); // `${code}:${pid}` -> timeout
 const roomTimers = new Map(); // code -> timeout
+const gameTimers = new Map(); // code -> timeout (turn or vote countdown)
+
+function clearGameTimer(code) {
+  const t = gameTimers.get(code);
+  if (t) {
+    clearTimeout(t);
+    gameTimers.delete(code);
+  }
+}
+
+// Stop any running turn/vote countdown and clear its deadline (e.g. on reveal).
+function stopGameTimers(room) {
+  clearGameTimer(room.code);
+  room.turnDeadline = null;
+  room.voteDeadline = null;
+}
+
+// Arm the per-turn countdown. The server owns the timer: when it fires it skips
+// the current player and advances, then re-arms for whatever comes next.
+function armTurnTimer(room) {
+  clearGameTimer(room.code);
+  room.voteDeadline = null;
+  const secs = parseInt(room.config.turnSeconds, 10) || 0;
+  if (room.phase !== "playing" || secs <= 0) {
+    room.turnDeadline = null;
+    return;
+  }
+  room.turnDeadline = Date.now() + secs * 1000;
+  const code = room.code;
+  gameTimers.set(
+    code,
+    setTimeout(() => {
+      gameTimers.delete(code);
+      const r = getRoom(code);
+      if (!r || r.phase !== "playing") return;
+      timeoutTurn(r);
+      if (r.phase === "voting") armVoteTimer(r);
+      else armTurnTimer(r);
+      broadcastRoom(r);
+    }, secs * 1000)
+  );
+}
+
+// Arm the voting countdown. On expiry, unconfirmed voters simply count as
+// abstentions (they were never recorded), and the votes resolve.
+function armVoteTimer(room) {
+  clearGameTimer(room.code);
+  room.turnDeadline = null;
+  const secs = parseInt(room.config.voteSeconds, 10) || 0;
+  if (room.phase !== "voting" || secs <= 0) {
+    room.voteDeadline = null;
+    return;
+  }
+  room.voteDeadline = Date.now() + secs * 1000;
+  const code = room.code;
+  gameTimers.set(
+    code,
+    setTimeout(() => {
+      gameTimers.delete(code);
+      const r = getRoom(code);
+      if (!r || r.phase !== "voting") return;
+      resolveVotes(r);
+      stopGameTimers(r);
+      broadcastRoom(r);
+    }, secs * 1000)
+  );
+}
 
 function clearPlayerTimer(code, pid) {
   const key = `${code}:${pid}`;
@@ -81,6 +151,13 @@ function clearRoomTimer(code) {
   if (t) {
     clearTimeout(t);
     roomTimers.delete(code);
+  }
+}
+
+// Wordpack lists are per-user, so each socket gets its own filtered view.
+function broadcastWordpacks() {
+  for (const s of io.sockets.sockets.values()) {
+    s.emit("wordpacks:changed", listPacks(s.data.userId));
   }
 }
 
@@ -106,6 +183,7 @@ function removePlayer(room, playerId) {
   }
   if (room.players.size === 0) {
     clearRoomTimer(room.code);
+    clearGameTimer(room.code);
     removeRoom(room.code);
     return;
   }
@@ -125,7 +203,10 @@ function scheduleRoomCleanup(room) {
     setTimeout(() => {
       roomTimers.delete(room.code);
       const stillEmpty = [...room.players.values()].every((p) => !p.connected);
-      if (stillEmpty) removeRoom(room.code);
+      if (stillEmpty) {
+        clearGameTimer(room.code);
+        removeRoom(room.code);
+      }
     }, ROOM_EMPTY_GRACE_MS)
   );
 }
@@ -134,6 +215,7 @@ io.on("connection", (socket) => {
   // Track which room/player this socket is bound to.
   socket.data.code = null;
   socket.data.playerId = null;
+  socket.data.userId = null;
 
   function bind(room, playerId) {
     socket.data.code = room.code;
@@ -159,17 +241,26 @@ io.on("connection", (socket) => {
   }
 
   // ----- Wordpacks (available anytime) -----
-  socket.on("wordpacks:list", (_p, cb) => cb?.(listPacks()));
+  socket.on("wordpacks:list", (p, cb) => {
+    if (p?.userId) socket.data.userId = p.userId;
+    cb?.(listPacks(socket.data.userId));
+  });
   socket.on("wordpacks:get", (id, cb) => cb?.(getPack(id)));
   socket.on("wordpacks:save", (payload, cb) => {
-    const pack = savePack(payload);
+    const uid = payload?.userId || socket.data.userId || null;
+    if (uid) socket.data.userId = uid;
+    const pack = savePack(payload, uid);
     cb?.({ ok: true, pack });
-    io.emit("wordpacks:changed", listPacks());
+    broadcastWordpacks();
   });
-  socket.on("wordpacks:delete", (id, cb) => {
-    const ok = deletePack(id);
+  socket.on("wordpacks:delete", (payload, cb) => {
+    const id = typeof payload === "string" ? payload : payload?.id;
+    const uid =
+      (typeof payload === "object" && payload?.userId) || socket.data.userId || null;
+    if (uid) socket.data.userId = uid;
+    const ok = deletePack(id, uid);
     cb?.({ ok });
-    io.emit("wordpacks:changed", listPacks());
+    broadcastWordpacks();
   });
   socket.on("wordpacks:parseBulk", (text, cb) => cb?.(parseBulk(text)));
 
@@ -210,6 +301,11 @@ io.on("connection", (socket) => {
       misterWhiteEnabled: !!config.misterWhiteEnabled,
       wordpackIds,
       cluesPerPlayer: Math.min(5, Math.max(1, parseInt(config.cluesPerPlayer, 10) || 2)),
+      turnSeconds: Math.min(600, Math.max(0, parseInt(config.turnSeconds, 10) || 0)),
+      voteSeconds: Math.min(600, Math.max(0, parseInt(config.voteSeconds, 10) || 0)),
+      hideRolesUntilEnd: !!config.hideRolesUntilEnd,
+      showVoteCounts: !!config.showVoteCounts,
+      continueGame: config.continueGame !== false,
     };
     cb?.({ ok: true });
     broadcastRoom(room);
@@ -221,6 +317,7 @@ io.on("connection", (socket) => {
     if (!room || !isHost(room)) return cb?.({ ok: false, error: "Action réservée à l'hôte" });
     const res = startGame(room);
     if (res.error) return cb?.({ ok: false, error: res.error });
+    armTurnTimer(room);
     cb?.({ ok: true });
     broadcastRoom(room);
   });
@@ -230,6 +327,9 @@ io.on("connection", (socket) => {
     if (!room) return cb?.({ ok: false, error: "Room introuvable" });
     const res = submitClue(room, socket.data.playerId, clue);
     if (res.error) return cb?.({ ok: false, error: res.error });
+    // submitClue may auto-advance into the voting phase.
+    if (room.phase === "voting") armVoteTimer(room);
+    else armTurnTimer(room);
     cb?.({ ok: true });
     broadcastRoom(room);
   });
@@ -239,6 +339,7 @@ io.on("connection", (socket) => {
     if (!room || !isHost(room)) return cb?.({ ok: false, error: "Action réservée à l'hôte" });
     const res = goToVote(room);
     if (res.error) return cb?.({ ok: false, error: res.error });
+    armVoteTimer(room);
     cb?.({ ok: true });
     broadcastRoom(room);
   });
@@ -248,8 +349,11 @@ io.on("connection", (socket) => {
     if (!room) return cb?.({ ok: false, error: "Room introuvable" });
     const res = castVote(room, socket.data.playerId, targetId);
     if (res.error) return cb?.({ ok: false, error: res.error });
-    // Auto-resolve once every alive player has voted.
-    if (res.allVoted) resolveVotes(room);
+    // Auto-resolve once every alive player has confirmed their vote.
+    if (res.allVoted) {
+      resolveVotes(room);
+      stopGameTimers(room);
+    }
     cb?.({ ok: true });
     broadcastRoom(room);
   });
@@ -259,6 +363,7 @@ io.on("connection", (socket) => {
     if (!room || !isHost(room)) return cb?.({ ok: false, error: "Action réservée à l'hôte" });
     const res = resolveVotes(room);
     if (res.error) return cb?.({ ok: false, error: res.error });
+    stopGameTimers(room);
     cb?.({ ok: true });
     broadcastRoom(room);
   });
@@ -277,14 +382,44 @@ io.on("connection", (socket) => {
     if (!room || !isHost(room)) return cb?.({ ok: false, error: "Action réservée à l'hôte" });
     const res = nextRound(room);
     if (res.error) return cb?.({ ok: false, error: res.error });
+    if (room.phase === "playing") armTurnTimer(room);
+    else stopGameTimers(room);
     cb?.({ ok: true });
     broadcastRoom(room);
   });
 
+  socket.on("game:setReady", ({ ready } = {}, cb) => {
+    const room = getBoundRoom();
+    if (!room) return cb?.({ ok: false, error: "Room introuvable" });
+    const res = setReady(room, socket.data.playerId, ready);
+    if (res.error) return cb?.({ ok: false, error: res.error });
+    cb?.({ ok: true });
+    broadcastRoom(room);
+  });
+
+  // Return to the lobby / settings screen (host only, always available).
   socket.on("game:restart", (_p, cb) => {
     const room = getBoundRoom();
     if (!room || !isHost(room)) return cb?.({ ok: false, error: "Action réservée à l'hôte" });
+    stopGameTimers(room);
     restartGame(room);
+    cb?.({ ok: true });
+    broadcastRoom(room);
+  });
+
+  // Relaunch a new game immediately with the same settings, skipping the lobby.
+  // Gated on every non-host player being ready.
+  socket.on("game:restartNow", (_p, cb) => {
+    const room = getBoundRoom();
+    if (!room || !isHost(room)) return cb?.({ ok: false, error: "Action réservée à l'hôte" });
+    if (!allReady(room)) {
+      return cb?.({ ok: false, error: "Tous les joueurs doivent être prêts" });
+    }
+    stopGameTimers(room);
+    restartGame(room);
+    const res = startGame(room);
+    if (res.error) return cb?.({ ok: false, error: res.error });
+    armTurnTimer(room);
     cb?.({ ok: true });
     broadcastRoom(room);
   });

@@ -25,6 +25,7 @@ export function Reveal({ room, myId, isHost, onAction }: Props) {
   const elim = room.lastEliminated;
   const isMisterWhitePhase = room.phase === "misterwhite";
   const iAmGuessing = room.misterWhiteGuessPending === myId;
+  const showVotes = room.config.showVoteCounts;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center p-6 text-center">
@@ -37,12 +38,43 @@ export function Reveal({ room, myId, isHost, onAction }: Props) {
             <AvatarCircle avatarId={elim.avatar} size={96} />
           </div>
           <div className="mt-3 text-3xl font-extrabold">{elim.pseudo}</div>
-          <div className={`mt-1 text-xl font-bold ${ROLE_COLOR[elim.role]}`}>
-            {ROLE_LABEL[elim.role]}
-          </div>
+          {/* When roles are hidden until the end, don't reveal the eliminated
+              player's camp here (Mister White's guess phase is inherent). */}
+          {!room.hideRoles && (
+            <div className={`mt-1 text-xl font-bold ${ROLE_COLOR[elim.role]}`}>
+              {ROLE_LABEL[elim.role]}
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-2xl font-bold">Aucun joueur éliminé (égalité)</div>
+      )}
+
+      {showVotes && (
+        <div className="card mt-6 w-full p-4">
+          <div className="mb-3 text-sm uppercase tracking-widest text-white/50">
+            Votes reçus
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {room.players.map((p) => (
+              <div key={p.id} className="flex flex-col items-center">
+                <div className="relative">
+                  <AvatarCircle avatarId={p.avatar} size={44} dim={!p.alive} />
+                  <div
+                    className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold text-white"
+                    style={{
+                      background: "linear-gradient(120deg,#ff2e9a,#8b5cd6)",
+                      boxShadow: "0 0 10px -2px rgba(255,46,154,0.8)",
+                    }}
+                  >
+                    {room.voteCounts[p.id] || 0}
+                  </div>
+                </div>
+                <div className="mt-1 max-w-full truncate text-xs">{p.pseudo}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {isMisterWhitePhase && (

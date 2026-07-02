@@ -6,11 +6,21 @@ const ROLE_LABEL: Record<string, string> = {
   misterwhite: "Mister White",
 };
 
-export function RoleCard({ you }: { you: YouView }) {
+export function RoleCard({
+  you,
+  hideRoles = false,
+}: {
+  you: YouView;
+  hideRoles?: boolean;
+}) {
   if (!you.role) return null;
   const isWhite = you.role === "misterwhite";
-  const roleColor =
-    you.role === "impostor"
+  // Mister White always knows their role (blank card); the civil/impostor
+  // distinction is what gets masked when "hide roles until end" is on.
+  const maskRole = hideRoles && !isWhite;
+  const roleColor = maskRole
+    ? "#b98cff"
+    : you.role === "impostor"
       ? "#ff5d7a"
       : you.role === "misterwhite"
         ? "#38bdf8"
@@ -20,12 +30,18 @@ export function RoleCard({ you }: { you: YouView }) {
       <div className="text-xs uppercase tracking-widest text-aubergine-300">
         Votre carte secrète
       </div>
-      <div className="mt-1 text-sm text-white/60">
-        Vous êtes{" "}
-        <span className="font-bold" style={{ color: roleColor }}>
-          {ROLE_LABEL[you.role]}
-        </span>
-      </div>
+      {maskRole ? (
+        <div className="mt-1 text-sm text-white/60">
+          Retenez bien votre mot — les rôles seront révélés à la fin.
+        </div>
+      ) : (
+        <div className="mt-1 text-sm text-white/60">
+          Vous êtes{" "}
+          <span className="font-bold" style={{ color: roleColor }}>
+            {ROLE_LABEL[you.role]}
+          </span>
+        </div>
+      )}
       <div
         className="mt-3 rounded-xl px-4 py-6"
         style={{

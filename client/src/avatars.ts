@@ -39,6 +39,38 @@ export const ANIME_CHARACTERS: AnimeCharacter[] = [
   { id: "denji", name: "Denji", img: "https://s4.anilist.co/file/anilistcdn/character/large/b130102-FO1VHNnEnLlB.png" },
   { id: "power", name: "Power", img: "https://s4.anilist.co/file/anilistcdn/character/large/b137079-6yLEUYR3bmpr.png" },
   { id: "shigeo-kageyama", name: "Shigeo Kageyama", img: "https://s4.anilist.co/file/anilistcdn/character/large/b89616-dXmdOc7L6SDi.png" },
+  // Dandadan
+  { id: "okarun", name: "Okarun", img: "https://s4.anilist.co/file/anilistcdn/character/large/b222593-qBqUvpodooAI.png" },
+  { id: "momo-ayase", name: "Momo Ayase", img: "https://s4.anilist.co/file/anilistcdn/character/large/b222594-24Jn7qlI5spH.png" },
+  { id: "aira-shiratori", name: "Aira Shiratori", img: "https://s4.anilist.co/file/anilistcdn/character/large/b245466-rd5I5mchZ3bv.png" },
+  { id: "turbo-babaa", name: "Turbo Babaa", img: "https://s4.anilist.co/file/anilistcdn/character/large/b239956-Fok0Pl3rNOEL.png" },
+  { id: "seiko-ayase", name: "Seiko Ayase", img: "https://s4.anilist.co/file/anilistcdn/character/large/b234824-i3s64ueaBqGq.png" },
+  // Gachiakuta
+  { id: "rudo", name: "Rudo", img: "https://s4.anilist.co/file/anilistcdn/character/large/b266433-8JWks5k2OPJn.png" },
+  { id: "enjin", name: "Enjin", img: "https://s4.anilist.co/file/anilistcdn/character/large/b266438-3Veykti1lXgg.png" },
+  { id: "zanka-nijiku", name: "Zanka", img: "https://s4.anilist.co/file/anilistcdn/character/large/b268742-PSWLnWDJH7HJ.png" },
+  { id: "chiwa", name: "Chiwa", img: "https://s4.anilist.co/file/anilistcdn/character/large/b266434-Wkjo1jlTgDCm.jpg" },
+  // Spy x Family
+  { id: "anya-forger", name: "Anya Forger", img: "https://s4.anilist.co/file/anilistcdn/character/large/b138100-4Li0tWRCa5bQ.png" },
+  { id: "yor-forger", name: "Yor Forger", img: "https://s4.anilist.co/file/anilistcdn/character/large/b138102-ZOAu9jI2d5ke.png" },
+  { id: "loid-forger", name: "Loid Forger", img: "https://s4.anilist.co/file/anilistcdn/character/large/b138101-7NCB0Md8zA6G.png" },
+  // Plus de personnages populaires
+  { id: "yoichi-isagi", name: "Yoichi Isagi", img: "https://s4.anilist.co/file/anilistcdn/character/large/b140856-wVzKSyvU7R5B.png" },
+  { id: "gon-freecss", name: "Gon Freecss", img: "https://s4.anilist.co/file/anilistcdn/character/large/b30-lyFExKyDhefc.jpg" },
+  { id: "hisoka-morow", name: "Hisoka", img: "https://s4.anilist.co/file/anilistcdn/character/large/b31-FZckOuu7L1un.png" },
+  { id: "ryomen-sukuna", name: "Sukuna", img: "https://s4.anilist.co/file/anilistcdn/character/large/b133701-rCQuDpHr3UZL.png" },
+  { id: "megumi-fushiguro", name: "Megumi Fushiguro", img: "https://s4.anilist.co/file/anilistcdn/character/large/b126635-L0y3I92JSUkN.png" },
+  { id: "nobara-kugisaki", name: "Nobara Kugisaki", img: "https://s4.anilist.co/file/anilistcdn/character/large/b133700-f6sOO3TcgLV6.png" },
+  { id: "tanjiro-kamado", name: "Tanjiro Kamado", img: "https://s4.anilist.co/file/anilistcdn/character/large/b126071-BTNEc1nRIv68.png" },
+  { id: "nezuko-kamado", name: "Nezuko Kamado", img: "https://s4.anilist.co/file/anilistcdn/character/large/b127518-NRlq1CQ1v1ro.png" },
+  { id: "zenitsu-agatsuma", name: "Zenitsu", img: "https://s4.anilist.co/file/anilistcdn/character/large/b129131-FZrQ7lSlxmEr.png" },
+  { id: "saitama", name: "Saitama", img: "https://s4.anilist.co/file/anilistcdn/character/large/b73935-ON5d0mAcrItd.jpg" },
+  { id: "son-goku", name: "Son Goku", img: "https://s4.anilist.co/file/anilistcdn/character/large/246-wsRRr6z1kii8.png" },
+  { id: "vegeta", name: "Vegeta", img: "https://s4.anilist.co/file/anilistcdn/character/large/b913-NIFkKazWM8VO.png" },
+  { id: "naruto-uzumaki", name: "Naruto Uzumaki", img: "https://s4.anilist.co/file/anilistcdn/character/large/b17-phjcWCkRuIhu.png" },
+  { id: "sasuke-uchiha", name: "Sasuke Uchiha", img: "https://s4.anilist.co/file/anilistcdn/character/large/b13-SISLEw1oAD7a.png" },
+  { id: "asta", name: "Asta", img: "https://s4.anilist.co/file/anilistcdn/character/large/b123285-tKijiuQErDS0.png" },
+  { id: "kobeni-higashiyama", name: "Kobeni", img: "https://s4.anilist.co/file/anilistcdn/character/large/b144594-0dbO1NSYeZ12.png" },
 ];
 
 const BY_ID = new Map(ANIME_CHARACTERS.map((c) => [c.id, c]));

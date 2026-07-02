@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { RoomState } from "../types";
 import { PlayerCard } from "../components/PlayerCard";
 import { RoleCard } from "../components/RoleCard";
+import { Countdown } from "../components/Countdown";
 
 interface Props {
   room: RoomState;
@@ -34,8 +35,9 @@ export function Game({ room, myId, isHost, onAction }: Props) {
         <div className="flex gap-2">
           <div className="chip">🔁 Manche {room.round}</div>
           <div className="chip">
-            🃏 Mot n°{room.wordNumber}/{room.config.cluesPerPlayer}
+            🃏 Mot n°{room.wordNumber}/{room.cluesThisRound || room.config.cluesPerPlayer}
           </div>
+          {!allSpoke && <Countdown deadline={room.turnDeadline} />}
         </div>
       </div>
 
@@ -58,7 +60,7 @@ export function Game({ room, myId, isHost, onAction }: Props) {
       {/* My secret card */}
       {me && room.you && (
         <div className="mb-4">
-          <RoleCard you={room.you} />
+          <RoleCard you={room.you} hideRoles={room.hideRoles} />
         </div>
       )}
 

@@ -25,13 +25,19 @@ function persist() {
 
 load();
 
-export function listPacks() {
-  return packs.map((p) => ({
-    id: p.id,
-    name: p.name,
-    theme: p.theme || "",
-    count: p.pairs.length,
-  }));
+// Packs without an ownerId are shared (built-ins): visible to everyone.
+// Packs with an ownerId are private to that user.
+export function listPacks(userId) {
+  return packs
+    .filter((p) => !p.ownerId || p.ownerId === userId)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      theme: p.theme || "",
+      count: p.pairs.length,
+      owned: !!userId && p.ownerId === userId,
+      shared: !p.ownerId,
+    }));
 }
 
 export function getPack(id) {
@@ -47,15 +53,18 @@ function normalizePairs(pairs) {
     .filter((p) => p.civil && p.imposteur);
 }
 
-// Create or update a pack. If id is provided and exists -> update, else create.
-export function savePack({ id, name, theme, pairs }) {
+// Create or update a pack.
+// - Updating in place is only allowed on a pack the user owns.
+// - Saving a shared/built-in pack (or someone else's) creates a private copy.
+export function savePack({ id, name, theme, pairs }, userId) {
   const cleanPairs = normalizePairs(pairs);
   const cleanName = String(name || "").trim() || "Pack sans nom";
   const cleanTheme = String(theme || "").trim();
+  const uid = userId || null;
 
   if (id) {
     const existing = packs.find((p) => p.id === id);
-    if (existing) {
+    if (existing && existing.ownerId && existing.ownerId === uid) {
       existing.name = cleanName;
       existing.theme = cleanTheme;
       existing.pairs = cleanPairs;
@@ -64,21 +73,24 @@ export function savePack({ id, name, theme, pairs }) {
     }
   }
   const newPack = {
-    id: id || nanoid(8),
+    id: nanoid(8),
     name: cleanName,
     theme: cleanTheme,
     pairs: cleanPairs,
+    ownerId: uid,
   };
   packs.push(newPack);
   persist();
   return newPack;
 }
 
-export function deletePack(id) {
-  const before = packs.length;
+// Only the owner can delete; shared/built-in packs are protected.
+export function deletePack(id, userId) {
+  const pack = packs.find((p) => p.id === id);
+  if (!pack || !pack.ownerId || pack.ownerId !== userId) return false;
   packs = packs.filter((p) => p.id !== id);
-  if (packs.length !== before) persist();
-  return packs.length !== before;
+  persist();
+  return true;
 }
 
 // Parse bulk text: one pair per line, separator "|" or ",".

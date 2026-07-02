@@ -69,6 +69,7 @@ export default function App() {
       screen = (
         <End
           room={room}
+          myId={myId}
           isHost={isHost}
           onAction={game.action}
           onLeave={game.leaveRoom}

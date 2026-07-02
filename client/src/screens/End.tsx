@@ -3,6 +3,7 @@ import { AvatarCircle } from "../components/AvatarCircle";
 
 interface Props {
   room: RoomState;
+  myId: string | null;
   isHost: boolean;
   onAction: (event: string, payload?: any) => void;
   onLeave: () => void;
@@ -19,8 +20,15 @@ const ROLE_COLOR: Record<string, string> = {
   misterwhite: "text-sky-300",
 };
 
-export function End({ room, isHost, onAction, onLeave }: Props) {
+export function End({ room, myId, isHost, onAction, onLeave }: Props) {
   const civilsWin = room.winner === "civils";
+  const showVotes = room.config.showVoteCounts;
+  const me = room.players.find((p) => p.id === myId);
+  // The host doesn't ready up — readiness is tracked for non-host players only.
+  const others = room.players.filter((p) => p.id !== room.hostId);
+  const readyCount = others.filter((p) => p.ready).length;
+  const allReady = others.every((p) => p.ready);
+
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-6 text-center anim-pop">
@@ -49,9 +57,30 @@ export function End({ room, isHost, onAction, onLeave }: Props) {
               key={p.id}
               className="flex items-center gap-2 rounded-xl bg-white/5 p-2"
             >
-              <AvatarCircle avatarId={p.avatar} size={40} dim={!p.alive} />
+              <div className="relative">
+                <AvatarCircle avatarId={p.avatar} size={40} dim={!p.alive} />
+                {showVotes && (
+                  <div
+                    className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold text-white"
+                    style={{
+                      background: "linear-gradient(120deg,#ff2e9a,#8b5cd6)",
+                      boxShadow: "0 0 10px -2px rgba(255,46,154,0.8)",
+                    }}
+                    title="Votes reçus (total de la partie)"
+                  >
+                    {room.voteCounts[p.id] || 0}
+                  </div>
+                )}
+              </div>
               <div className="truncate">
-                <div className="text-sm font-semibold">{p.pseudo}</div>
+                <div className="flex items-center gap-1 text-sm font-semibold">
+                  {p.pseudo}
+                  {p.ready && (
+                    <span className="text-emerald-400" title="Prêt">
+                      ✓
+                    </span>
+                  )}
+                </div>
                 {p.role && (
                   <div className={`text-xs font-bold ${ROLE_COLOR[p.role]}`}>
                     {ROLE_LABEL[p.role]}
@@ -63,20 +92,64 @@ export function End({ room, isHost, onAction, onLeave }: Props) {
         </div>
       </div>
 
-      <div className="flex gap-3">
-        {isHost && (
-          <button className="btn-primary flex-1" onClick={() => onAction("game:restart")}>
-            Rejouer
-          </button>
-        )}
-        <button className="btn-ghost flex-1" onClick={onLeave}>
-          Quitter
+      {/* Non-host players ready up; the host drives the relaunch instead. */}
+      {me && !isHost && (
+        <button
+          className={`mb-3 w-full rounded-xl px-4 py-3 font-bold transition active:scale-95 ${
+            me.ready ? "text-white" : "bg-white/10 text-white hover:bg-white/20"
+          }`}
+          style={
+            me.ready
+              ? {
+                  background: "linear-gradient(120deg,#34d399,#059669)",
+                  boxShadow: "0 0 16px -3px rgba(52,211,153,0.8)",
+                }
+              : undefined
+          }
+          onClick={() => onAction("game:setReady", { ready: !me.ready })}
+        >
+          {me.ready ? "✓ Prêt — cliquer pour annuler" : "Je suis prêt à rejouer"}
         </button>
-      </div>
-      {!isHost && (
-        <div className="mt-3 text-center text-sm text-white/40">
-          L'hôte peut relancer une partie.
+      )}
+
+      {others.length > 0 && (
+        <div className="mb-3 text-center text-sm text-white/50">
+          {readyCount}/{others.length} joueurs prêts
         </div>
+      )}
+
+      {isHost ? (
+        <div className="flex flex-col gap-3">
+          <button
+            className="btn-primary w-full"
+            disabled={!allReady}
+            onClick={() => onAction("game:restartNow")}
+          >
+            {allReady
+              ? "Relancer une partie directement"
+              : `En attente des joueurs (${readyCount}/${others.length} prêts)`}
+          </button>
+          <div className="flex gap-3">
+            <button
+              className="btn-ghost flex-1"
+              onClick={() => onAction("game:restart")}
+            >
+              Revenir aux paramètres
+            </button>
+            <button className="btn-ghost flex-1" onClick={onLeave}>
+              Quitter
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <button className="btn-ghost w-full" onClick={onLeave}>
+            Quitter
+          </button>
+          <div className="mt-3 text-center text-sm text-white/40">
+            L'hôte peut relancer une partie ou revenir aux paramètres.
+          </div>
+        </>
       )}
     </div>
   );

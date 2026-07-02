@@ -65,8 +65,52 @@ Voir **[DEPLOY.md](./DEPLOY.md)** — guide pas-à-pas pour **Render** / **Railw
 - **Mister White** (optionnel) : carte vierge « Devinez le mot ».
 
 Déroulé : chacun donne un mot-clé à son tour → phase de vote → le plus voté est
-éliminé et son rôle révélé. Si Mister White est éliminé, il a une chance de
-deviner le mot des civils.
+éliminé et son rôle révélé, puis l'hôte fait **Continuer**. Si Mister White est
+éliminé, il a une chance de deviner le mot des civils. Le **joueur de départ est
+tiré au hasard** à chaque manche.
+
+### Réglages de l'hôte (lobby)
+
+Tous les réglages sont **visibles par tous les joueurs** ; seul l'hôte peut les
+modifier (les autres les voient en lecture seule), et toute modification est
+répliquée en temps réel.
+
+- **Nombre d'imposteurs** et **Mister White** (on/off).
+- **Mots par joueur avant le vote** : combien de mots-clés chacun pose par manche.
+- **Temps par tour (en secondes)** : compte à rebours synchronisé (serveur
+  autoritaire) pour poser son mot, `60 s` par défaut. `0` = illimité. À
+  l'expiration, le tour est **passé automatiquement** (mot-clé « — »).
+- **Temps de vote (en secondes)** : compte à rebours de la phase de vote, `60 s`
+  par défaut. `0` = illimité. À l'expiration, les votes non confirmés comptent
+  comme **abstention**.
+- **Afficher les rôles dès le début** : **désactivé par défaut**. Tant qu'il est
+  désactivé, chaque joueur ne voit que son mot et la distinction civil/imposteur
+  n'est **révélée qu'à l'écran de fin** (Mister White connaît toujours sa carte
+  vierge). Activé, le rôle est affiché dès le début.
+- **Afficher le nombre de votes** : à la fin de la manche/partie, affiche les
+  votes reçus par **chaque** joueur sous son avatar (0 compris). Pendant le vote,
+  les totaux restent cachés pour ne pas influencer les choix.
+- **La partie continue jusqu'à la victoire** : activé par défaut, la partie
+  enchaîne les manches jusqu'à ce qu'un camp gagne ; les **manches suivantes
+  n'ont qu'un seul mot par joueur**. Désactivé, la partie s'arrête après le
+  premier vote (civils gagnants si un imposteur est démasqué, sinon imposteurs).
+
+### Vote
+
+Le vote se fait en **deux temps** : on **sélectionne** un joueur, puis on
+**confirme** (« Confirmer le vote »). Tant que ce n'est pas confirmé, le vote
+n'est pas comptabilisé et la sélection peut être changée.
+
+### Rejouer
+
+À l'écran de fin, chaque joueur (**hors hôte**) dispose d'un bouton **« Prêt »**.
+L'hôte n'a pas besoin de se déclarer prêt ; il choisit entre :
+
+- **Relancer une partie directement** — n'est actif que lorsque **tous** les
+  autres joueurs sont prêts (indicateur « prêts (X/Y) »), et redémarre
+  immédiatement avec les mêmes réglages.
+- **Revenir aux paramètres** — toujours disponible, ramène au lobby pour ajuster
+  les réglages avant de relancer.
 
 **Victoire** :
 - Les **civils** gagnent quand tous les imposteurs ET Mister White sont éliminés.

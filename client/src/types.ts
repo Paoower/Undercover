@@ -16,6 +16,7 @@ export interface PlayerView {
   alive: boolean;
   clues: string[];
   hasVoted: boolean;
+  ready: boolean;
   role?: Role;
   word?: string | null;
 }
@@ -25,6 +26,11 @@ export interface RoomConfig {
   misterWhiteEnabled: boolean;
   wordpackIds: string[];
   cluesPerPlayer: number;
+  turnSeconds: number;
+  voteSeconds: number;
+  hideRolesUntilEnd: boolean;
+  showVoteCounts: boolean;
+  continueGame: boolean;
 }
 
 export interface YouView {
@@ -43,10 +49,14 @@ export interface RoomState {
   config: RoomConfig;
   round: number;
   wordNumber: number;
+  cluesThisRound: number;
   players: PlayerView[];
   currentTurnId: string | null;
   you: YouView | null;
   voteCounts: Record<string, number>;
+  hideRoles: boolean;
+  turnDeadline: number | null;
+  voteDeadline: number | null;
   lastEliminated: { id: string; pseudo: string; avatar: string; role: Role } | null;
   misterWhiteGuessPending: string | null;
   winner: "civils" | "impostors" | null;
@@ -64,6 +74,8 @@ export interface PackSummary {
   name: string;
   theme: string;
   count: number;
+  owned?: boolean;
+  shared?: boolean;
 }
 
 export interface WordPack {
@@ -71,4 +83,5 @@ export interface WordPack {
   name: string;
   theme: string;
   pairs: WordPair[];
+  ownerId?: string | null;
 }

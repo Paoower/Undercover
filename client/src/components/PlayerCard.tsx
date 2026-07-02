@@ -19,6 +19,7 @@ interface Props {
   voteCount?: number;
   onVote?: () => void;
   votedByMe?: boolean;
+  voteLabel?: string;
 }
 
 export function PlayerCard({
@@ -28,6 +29,7 @@ export function PlayerCard({
   voteCount,
   onVote,
   votedByMe,
+  voteLabel,
 }: Props) {
   return (
     <div
@@ -111,7 +113,7 @@ export function PlayerCard({
               : undefined
           }
         >
-          {votedByMe ? "✓ voté" : "Voter"}
+          {voteLabel ?? (votedByMe ? "✓ voté" : "Voter")}
         </button>
       )}
 

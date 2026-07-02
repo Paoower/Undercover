@@ -49,6 +49,7 @@ export function startGame(room) {
     p.alive = true;
     p.clues = [];
     p.votedFor = null;
+    p.ready = false;
     const role = roles[p.id] || "civil";
     p.role = role;
     if (role === "civil") p.word = room.civilWord;
@@ -59,6 +60,7 @@ export function startGame(room) {
   room.phase = "playing";
   room.round = 1;
   room.votes = {};
+  room.lastVoteCounts = {};
   room.lastEliminated = null;
   room.misterWhiteGuessPending = null;
   room.winner = null;
@@ -67,14 +69,17 @@ export function startGame(room) {
   return { ok: true };
 }
 
-// Build the turn sequence for a round: each alive player speaks `cluesPerPlayer`
-// times, cycling through the same shuffled order.
+// Build the turn sequence for a round. The starting player (and thus the whole
+// order) is random each round. The first round uses `cluesPerPlayer` clues; in
+// continue mode, every later round is a single clue per player.
 function buildTurnOrder(room) {
-  const cluesPerPlayer = Math.max(1, room.config.cluesPerPlayer || 2);
+  const cluesThisRound =
+    room.round <= 1 ? Math.max(1, room.config.cluesPerPlayer || 2) : 1;
+  room.cluesThisRound = cluesThisRound;
   const base = shuffle(alivePlayers(room).map((p) => p.id));
   room.baseOrder = base;
   room.turnOrder = [];
-  for (let c = 0; c < cluesPerPlayer; c++) room.turnOrder.push(...base);
+  for (let c = 0; c < cluesThisRound; c++) room.turnOrder.push(...base);
   room.currentTurnIndex = 0;
   room.wordNumber = 1;
 }
@@ -94,16 +99,28 @@ export function submitClue(room, playerId, clue) {
   if (!text) return { error: "Mot-clé vide" };
 
   player.clues.push(text);
+  return advanceTurn(room);
+}
 
-  // Advance to next player in turn order.
+// Time ran out for the current player: record a placeholder and move on.
+export function timeoutTurn(room) {
+  if (room.phase !== "playing") return { error: "Ce n'est pas la phase de jeu" };
+  const turnId = currentTurnPlayerId(room);
+  const player = room.players.get(turnId);
+  if (player && player.alive) player.clues.push("—");
+  return advanceTurn(room);
+}
+
+// Advance to the next player in the turn order, auto-starting the vote once
+// everyone has given their configured number of clues.
+function advanceTurn(room) {
   room.currentTurnIndex++;
   const base = room.baseOrder.length || 1;
   room.wordNumber = Math.min(
     Math.floor(room.currentTurnIndex / base) + 1,
-    room.config.cluesPerPlayer || 2
+    room.cluesThisRound || room.config.cluesPerPlayer || 2
   );
 
-  // Everyone gave the configured number of clues -> auto-start voting.
   if (room.currentTurnIndex >= room.turnOrder.length) {
     goToVote(room);
     return { ok: true, autoVote: true };
@@ -143,6 +160,8 @@ export function resolveVotes(room) {
   for (const targetId of Object.values(room.votes)) {
     counts[targetId] = (counts[targetId] || 0) + 1;
   }
+  // Keep the tally so the end/reveal screens can show per-player vote counts.
+  room.lastVoteCounts = counts;
 
   let eliminatedId = null;
   if (Object.keys(counts).length > 0) {
@@ -234,9 +253,27 @@ export function nextRound(room) {
     return { ok: true, ended: true };
   }
 
+  // Single-round mode: the game ends after the first vote. Decide the outcome
+  // from who was eliminated.
+  if (!room.config.continueGame) {
+    const elim = room.lastEliminated;
+    room.phase = "ended";
+    if (elim && (elim.role === "impostor" || elim.role === "misterwhite")) {
+      room.winner = "civils";
+      room.winReason = "Un imposteur a été démasqué dès le premier vote !";
+    } else {
+      room.winner = "impostors";
+      room.winReason = elim
+        ? "Le premier vote a éliminé un innocent."
+        : "Aucun joueur n'a été éliminé au premier vote.";
+    }
+    return { ok: true, ended: true };
+  }
+
   room.round++;
   room.phase = "playing";
   room.votes = {};
+  room.lastVoteCounts = {};
   for (const p of room.players.values()) p.votedFor = null;
   buildTurnOrder(room);
   return { ok: true, ended: false };
@@ -250,16 +287,35 @@ export function restartGame(room) {
   room.turnOrder = [];
   room.currentTurnIndex = 0;
   room.votes = {};
+  room.lastVoteCounts = {};
   room.lastEliminated = null;
   room.misterWhiteGuessPending = null;
   room.winner = null;
   room.winReason = null;
+  room.turnDeadline = null;
+  room.voteDeadline = null;
   for (const p of room.players.values()) {
     p.role = null;
     p.word = null;
     p.alive = true;
     p.clues = [];
     p.votedFor = null;
+    p.ready = false;
   }
   return { ok: true };
+}
+
+// Toggle a player's "ready to replay" flag (used on the end screen).
+export function setReady(room, playerId, ready) {
+  const player = room.players.get(playerId);
+  if (!player) return { error: "Joueur introuvable" };
+  player.ready = !!ready;
+  return { ok: true };
+}
+
+// True when every non-host player has flagged themselves ready. The host doesn't
+// need to ready up — they drive the relaunch.
+export function allReady(room) {
+  const others = [...room.players.values()].filter((p) => p.id !== room.hostId);
+  return others.every((p) => p.ready);
 }
